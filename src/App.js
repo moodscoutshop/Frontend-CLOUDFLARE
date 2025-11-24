@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink } from 'lucide-react';
+import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink, Wrench } from 'lucide-react';
 import logo from './assets/logo.svg';
 
 export default function MoodScoutLanding() {
@@ -14,7 +14,7 @@ export default function MoodScoutLanding() {
     email: '', 
     phone: '', 
     reason: '', 
-    categories: [] // Changed from category to categories (array)
+    categories: []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
@@ -52,21 +52,17 @@ export default function MoodScoutLanding() {
     }
   }, [showModal]);
 
-  // Function to handle category selection
   const handleCategoryToggle = (category) => {
     setSelectedCategories(prev => {
       const isSelected = prev.includes(category);
       let newCategories;
       
       if (isSelected) {
-        // Remove category if already selected
         newCategories = prev.filter(cat => cat !== category);
       } else {
-        // Add category if not selected
         newCategories = [...prev, category];
       }
       
-      // Update formData with the new categories array
       setFormData(prevData => ({
         ...prevData,
         categories: newCategories
@@ -76,12 +72,10 @@ export default function MoodScoutLanding() {
     });
   };
 
-  // Function to remove a category
   const removeCategory = (categoryToRemove) => {
     setSelectedCategories(prev => {
       const newCategories = prev.filter(cat => cat !== categoryToRemove);
       
-      // Update formData
       setFormData(prevData => ({
         ...prevData,
         categories: newCategories
@@ -91,34 +85,13 @@ export default function MoodScoutLanding() {
     });
   };
 
-  // Search Etsy products
+  // DISABLED - Search functionality (under construction)
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    setIsSearching(true);
-    setShowSearchResults(true);
-
-    try {
-      // Call your backend API to search Etsy
-      const response = await fetch(`http://localhost:5000/api/etsy/search?q=${encodeURIComponent(searchQuery)}&limit=12`);
-      const data = await response.json();
-
-      if (data.success) {
-        setSearchResults(data.results);
-      } else {
-        console.error('Search failed:', data.message);
-        setSearchResults([]);
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
+    // Disabled until Etsy API is configured
+    return;
   };
 
-  // Separate function to save to database
   const saveToDatabase = async (data) => {
     try {
       console.log('📝 Saving to database...');
@@ -150,7 +123,6 @@ export default function MoodScoutLanding() {
     }
   };
 
-  // Separate function to send email
   const sendEmail = async (data) => {
     try {
       console.log('📧 Sending email...');
@@ -198,7 +170,6 @@ export default function MoodScoutLanding() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate that at least one category is selected
     if (selectedCategories.length === 0) {
       alert('Please select at least one category');
       return;
@@ -229,7 +200,6 @@ export default function MoodScoutLanding() {
       }
 
       setSubmitStatus('success');
-      // Reset form data including categories
       setFormData({ name: '', email: '', phone: '', reason: '', categories: [] });
       setSelectedCategories([]);
       
@@ -293,7 +263,7 @@ export default function MoodScoutLanding() {
         </div>
       </nav>
 
-      {/* Waitlist Modal */}
+      {/* Waitlist Modal - Keep existing code */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
           <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl relative my-8">
@@ -384,7 +354,6 @@ export default function MoodScoutLanding() {
                       <span className="text-xs text-gray-500 ml-2">(Select multiple)</span>
                     </label>
                     
-                    {/* Selected Categories Display */}
                     {selectedCategories.length > 0 && (
                       <div className="mb-3 flex flex-wrap gap-2">
                         {selectedCategories.map((category, index) => (
@@ -405,7 +374,6 @@ export default function MoodScoutLanding() {
                       </div>
                     )}
                     
-                    {/* Categories Selection Grid */}
                     <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border border-gray-300 rounded-xl">
                       {etsyCategories.map((category, index) => (
                         <button
@@ -496,7 +464,7 @@ export default function MoodScoutLanding() {
         </div>
       )}
 
-      {/* Hero Section with Search */}
+      {/* Hero Section with Search - UNDER CONSTRUCTION */}
       <section className="relative pt-32 pb-20 px-6 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-purple-50/50 via-pink-50/30 to-white"></div>
         
@@ -521,115 +489,55 @@ export default function MoodScoutLanding() {
               Let AI understand your style and find the treasures you'll love.
             </p>
 
-            {/* Google-style Search Bar */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <form onSubmit={handleSearch} className="relative">
+            {/* Google-style Search Bar - UNDER CONSTRUCTION */}
+            <div className="max-w-2xl mx-auto mb-8 relative">
+              {/* Under Construction Badge */}
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                <div className="bg-gradient-to-r from-amber-400 to-orange-400 text-white px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium">
+                  <Wrench className="w-4 h-4" />
+                  <span>Coming Soon</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSearch} className="relative opacity-60 pointer-events-none">
                 <div className="relative group">
-                  <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400 group-focus-within:text-purple-500 transition-colors" />
+                  <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search Etsy products..."
-                    className="w-full pl-14 pr-14 py-5 text-lg border-2 border-gray-200 rounded-full focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none transition-all shadow-lg hover:shadow-xl"
+                    placeholder="Search Etsy products"
+                    disabled
+                    className="w-full pl-14 pr-14 py-5 text-lg border-2 border-gray-200 rounded-full outline-none transition-all shadow-lg bg-gray-50 cursor-not-allowed"
                   />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchQuery('');
-                        setShowSearchResults(false);
-                        setSearchResults([]);
-                      }}
-                      className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  )}
                 </div>
                 <div className="flex gap-3 justify-center mt-6">
                   <button
                     type="submit"
-                    disabled={!searchQuery.trim() || isSearching}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
+                    className="bg-gradient-to-r from-gray-400 to-gray-500 text-white px-8 py-3 rounded-full font-medium cursor-not-allowed"
                   >
-                    {isSearching ? 'Searching...' : 'Search Etsy'}
+                    Search Etsy
                   </button>
                   <button 
                     type="button"
                     onClick={() => setShowModal(true)}
-                    className="bg-white text-gray-700 px-8 py-3 rounded-full font-medium border-2 border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-300 pointer-events-auto"
                   >
                     Join Waitlist
                   </button>
                 </div>
               </form>
+
+              {/* Info message */}
+              <p className="text-sm text-gray-500 mt-4 flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Launching in 2026. Join the waitlist to be notified!
+              </p>
             </div>
           </div>
         </div>
       </section>
-
-      {/* Search Results */}
-      {showSearchResults && (
-        <section className="py-12 px-6 bg-gray-50">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold">
-                Search Results {searchResults.length > 0 && `(${searchResults.length})`}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowSearchResults(false);
-                  setSearchResults([]);
-                  setSearchQuery('');
-                }}
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Clear Results
-              </button>
-            </div>
-
-            {isSearching ? (
-              <div className="text-center py-20">
-                <div className="inline-block w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-                <p className="mt-4 text-gray-600">Searching Etsy...</p>
-              </div>
-            ) : searchResults.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {searchResults.map((product, index) => (
-                  <div key={index} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group">
-                    <div className="relative overflow-hidden aspect-square">
-                      <img
-                        src={product.image}
-                        alt={product.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{product.title}</h3>
-                      <p className="text-2xl font-bold text-purple-600 mb-3">{product.price}</p>
-                      <a
-                        href={product.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-lg font-medium hover:shadow-lg hover:scale-105 transition-all duration-300"
-                      >
-                        View on Etsy
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-20">
-                <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg">No products found. Try a different search term!</p>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
 
       {/* How It Works */}
       <section id="how" className="py-20 px-6 bg-gradient-to-b from-white to-gray-50">
