@@ -3,6 +3,10 @@ import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, M
 import logo from './assets/logo.svg';
 
 export default function MoodScoutLanding() {
+   // Add this line - it automatically handles both local and production
+  const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000' 
+    : 'https://your-backend-app.vercel.app';
   const [scrollY, setScrollY] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -37,7 +41,8 @@ export default function MoodScoutLanding() {
     "Weddings",
     "Other"
   ];
-
+ 
+  
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
@@ -95,7 +100,7 @@ export default function MoodScoutLanding() {
   const saveToDatabase = async (data) => {
     try {
       console.log('📝 Saving to database...');
-      const response = await fetch('http://localhost:5000/api/waitlist', {
+      const response = await fetch(`${API_BASE_URL}/api/waitlist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
