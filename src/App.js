@@ -6,7 +6,7 @@ export default function MoodScoutLanding() {
    // Add this line - it automatically handles both local and production
   const API_BASE_URL = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000' 
-    : 'https://your-backend-app.vercel.app';
+    : 'https://backend-five-ecru-24.vercel.app';
   const [scrollY, setScrollY] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
