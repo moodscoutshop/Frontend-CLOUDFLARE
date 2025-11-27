@@ -100,7 +100,7 @@ export default function MoodScoutLanding() {
   const saveToDatabase = async (data) => {
     try {
       console.log('📝 Saving to database...');
-      const response = await fetch(`${API_BASE_URL}/api/waitlist`, {
+      const response = await fetch(`${API_BASE_URL}/api/waitlisters`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
