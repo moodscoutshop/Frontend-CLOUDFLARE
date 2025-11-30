@@ -20,6 +20,9 @@ export default function MoodScoutLanding() {
   const [submitStatus, setSubmitStatus] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
 
+  // API URL - UPDATED FOR PRODUCTION
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
   const etsyCategories = [
     "Art & Collectibles",
     "Bags & Purses",
@@ -94,8 +97,8 @@ export default function MoodScoutLanding() {
 
   const saveToDatabase = async (data) => {
     try {
-      console.log('📝 Saving to database...');
-      const response = await fetch('http://localhost:5000/api/waitlist', {
+      console.log('💾 Saving to database...');
+      const response = await fetch(`${API_URL}/api/waitlist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
