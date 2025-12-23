@@ -88,11 +88,54 @@ export default function MoodScoutLanding() {
     });
   };
 
-  // DISABLED - Search functionality (under construction)
+  // // DISABLED - Search functionality (under construction)
+  // const handleSearch = async (e) => {
+  //   e.preventDefault();
+  //   // Disabled until Etsy API is configured
+  //   return;
+  // };
+
+  
+  // Search functionality (under construction)
   const handleSearch = async (e) => {
     e.preventDefault();
-    // Disabled until Etsy API is configured
-    return;
+    console.log("DEBUG: Search initiated for:", searchQuery);
+
+    if (!searchQuery.trim()) {
+      alert("Please enter a search query or Pinterest URL.");
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchResults([]);
+    setShowSearchResults(false);
+
+    try {
+      console.log("DEBUG: Calling backend unified search with query:", searchQuery);
+      // Call the unified backend endpoint
+      const response = await fetch(`${API_URL}/api/unified-search`, { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+      const data = await response.json();
+      console.log("DEBUG: Backend response for unified search:", data);
+
+      if (data.success) {
+        setSearchResults(data.results || []);
+        setShowSearchResults(true);
+      } else {
+        console.error("❌ Unified search failed:", data.message);
+        alert(data.message || "An error occurred during search.");
+      }
+    } catch (error) {
+      console.error("❌ Search error:", error);
+      alert("An unexpected error occurred during search.");
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const saveToDatabase = async (data) => {
@@ -502,7 +545,8 @@ export default function MoodScoutLanding() {
                 </div>
               </div>
 
-              <form onSubmit={handleSearch} className="relative opacity-60 pointer-events-none">
+              <form onSubmit={handleSearch} className="relative">
+              {/* className="relative opacity-60 pointer-events-none"> */}
                 <div className="relative group">
                   <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" />
                   <input
@@ -510,16 +554,18 @@ export default function MoodScoutLanding() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search Etsy products"
-                    disabled
-                    className="w-full pl-14 pr-14 py-5 text-lg border-2 border-gray-200 rounded-full outline-none transition-all shadow-lg bg-gray-50 cursor-not-allowed"
+                    // disabled
+                    className="w-full pl-14 pr-14 py-5 text-lg border-2 border-gray-200 rounded-full outline-none transition-all shadow-lg bg-gray-50"
                   />
+                  {/* className="w-full pl-14 pr-14 py-5 text-lg border-2 border-gray-200 rounded-full outline-none transition-all shadow-lg bg-gray-50 cursor-not-allowed"/> */}
                 </div>
                 <div className="flex gap-3 justify-center mt-6">
                   <button
                     type="submit"
-                    disabled
-                    className="bg-gradient-to-r from-gray-400 to-gray-500 text-white px-8 py-3 rounded-full font-medium cursor-not-allowed"
-                  >
+                    // disabled
+                    className="bg-gradient-to-r from-gray-400 to-gray-500 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-300 pointer-events-auto">
+                    {/* className="bg-gradient-to-r from-gray-400 to-gray-500 text-white px-8 py-3 rounded-full font-medium cursor-not-allowed"> */}
+
                     Search Etsy
                   </button>
                   <button 
@@ -541,6 +587,209 @@ export default function MoodScoutLanding() {
           </div>
         </div>
       </section>
+
+      {/* Search Results Section */}
+      {showSearchResults && searchResults.length > 0 && (
+        <section className="py-12 px-6 bg-gradient-to-b from-purple-50 to-white">
+          <div className="max-w-7xl mx-auto">
+            {console.log('📊 Full Search Results:', searchResults)}
+            
+            {/* Results Header */}
+            <div className="text-center mb-10">
+              <h2 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Search Results
+              </h2>
+              <p className="text-gray-600">Found {searchResults.length} items from your Pinterest board</p>
+            </div>
+
+            {/* Row 1: Pinterest Board Images Gallery */}
+            <div className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">Pinterest Board Images</h3>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {searchResults.map((item, index) => {
+                  console.log(`🖼️ Pinterest Image ${index + 1}:`, item.image_path);
+                  return (
+                  <div 
+                    key={`pinterest-${index}`}
+                    className="relative group aspect-square rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  >
+                    <img 
+                      src={item.image_path ? `../Backend-master/${item.image_path}` : `https://via.placeholder.com/300x300?text=Image+${index + 1}`}
+                      alt={`Pinterest image ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-3 left-3 right-3">
+                        <p className="text-white text-sm font-medium truncate">Image {index + 1}</p>
+                      </div>
+                    </div>
+                  </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Row 2: AI Descriptions & Keywords */}
+            <div className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">AI Analysis & Keywords</h3>
+              </div>
+              <div className="grid gap-6 auto-rows-fr" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+                {searchResults.map((item, index) => (
+                  <div 
+                    key={`ai-${index}`}
+                    className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 flex flex-col">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span className="text-purple-600 font-bold text-sm">{index + 1}</span>
+                      </div>
+                      <h4 className="font-semibold text-gray-800">Image Analysis</h4>
+                    </div>
+                    <p className="text-gray-600 mb-4 leading-relaxed flex-grow">
+                      {item.ai_description || 'AI analysis not available'}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(item.keywords || '').split(',').filter(k => k.trim()).map((keyword, ki) => (
+                        <span 
+                          key={ki}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-sm rounded-full"
+                        >
+                          <Tag className="w-3 h-3" />
+                          {keyword.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Row 3: Product Cards */}
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                  <ShoppingBag className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">Matched Products</h3>
+                <span className="ml-auto text-gray-500 text-sm">
+                  {searchResults.reduce((total, item) => {
+                    let count = 0;
+                    if (item.product_1_name) count++;
+                    if (item.product_2_name) count++;
+                    if (item.product_3_name) count++;
+                    return total + count;
+                  }, 0)} products found
+                </span>
+              </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {searchResults.flatMap((item, itemIndex) => {
+                  const products = [];
+                  for (let i = 1; i <= 3; i++) {
+                    const productName = item[`product_${i}_name`];
+                    const productUrl = item[`product_${i}_url`];
+                    const productPrice = item[`product_${i}_price`];
+                    const productScore = item[`product_${i}_score`];
+                    const productDescription = item[`product_${i}_description`] || 'No description available';
+                    const productImage = item[`product_${i}_image`];
+                    
+                    console.log(`🛍️ Product ${itemIndex + 1}-${i}:`, { productName, productImage });
+                    
+                    if (productName) {
+                      products.push(
+                        <a
+                          key={`product-${itemIndex}-${i}`}
+                          href={productUrl || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-200 block"
+                        >
+                          {/* Product Image */}
+                          <div className="aspect-square relative overflow-hidden bg-gray-100">
+                            <img 
+                              src={productImage ? `../Backend-master/${productImage}` : `https://via.placeholder.com/300x300?text=${encodeURIComponent(productName)}`}
+                              alt={productName}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            {productScore && (
+                              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                <TrendingUp className="w-3 h-3 text-purple-600" />
+                                <span className="text-sm font-semibold text-purple-600">{productScore}%</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Product Info */}
+                          <div className="p-4">
+                            {/* Product Name with hover popover */}
+                            <div className="group/name relative mb-1">
+                              <h4 className="font-semibold text-gray-800 truncate group-hover:text-purple-600 transition-colors cursor-pointer">
+                                {productName}
+                              </h4>
+                              {/* Name Popover - only shows when hovering on name */}
+                              <div className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 invisible group-hover/name:opacity-100 group-hover/name:visible transition-all duration-300 z-50 whitespace-normal">
+                                <p>{productName}</p>
+                                <div className="absolute bottom-0 left-4 transform translate-y-full">
+                                  <div className="border-6 border-transparent border-t-gray-900"></div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {productPrice && (
+                              <p className="text-lg font-bold text-purple-600 mb-2">{productPrice}</p>
+                            )}
+                            
+                            {/* Description with hover popover - only shows when hovering on description */}
+                            <div className="group/desc relative">
+                              <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed cursor-pointer">
+                                {productDescription}
+                              </p>
+                              {/* Description Popover - only shows when hovering on description */}
+                              <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 invisible group-hover/desc:opacity-100 group-hover/desc:visible transition-all duration-300 z-50 max-h-40 overflow-y-auto">
+                                <p className="leading-relaxed">{productDescription}</p>
+                                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
+                                  <div className="border-8 border-transparent border-t-gray-900"></div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* External link indicator */}
+                            <div className="flex items-center gap-1 mt-3 text-purple-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ExternalLink className="w-4 h-4" />
+                              <span>View on ZART</span>
+                            </div>
+                          </div>
+                        </a>
+                      );
+                    }
+                  }
+                  return products;
+                })}
+              </div>
+            </div>
+
+          </div>
+        </section>
+      )}
+
+      {/* Loading State */}
+      {isSearching && (
+        <section className="py-20 px-6 bg-gradient-to-b from-purple-50 to-white">
+          <div className="max-w-7xl mx-auto text-center">
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white rounded-full shadow-lg">
+              <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-gray-700 font-medium">Analyzing your Pinterest board with AI...</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* How It Works */}
       <section id="how" className="py-20 px-6 bg-gradient-to-b from-white to-gray-50">
