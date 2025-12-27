@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink, Wrench } from 'lucide-react';
+import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink, Wrench, Loader2 } from 'lucide-react';
 import logo from './assets/logo.svg';
 
 export default function MoodScoutLanding() {
@@ -7,8 +7,20 @@ export default function MoodScoutLanding() {
   const [showModal, setShowModal] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  
+  // Progressive loading states
   const [isSearching, setIsSearching] = useState(false);
+  const [searchStep, setSearchStep] = useState(''); // 'pinterest', 'analysis', 'products'
+  const [searchMessage, setSearchMessage] = useState('');
+  const [searchType, setSearchType] = useState(null); // 'pinterest' or 'keyword'
+  
+  // Progressive data states
+  const [pinterestImages, setPinterestImages] = useState(null);
+  const [analysisData, setAnalysisData] = useState(null);
+  const [productsData, setProductsData] = useState(null);
+  const [processingTime, setProcessingTime] = useState(null);
+  const [boardName, setBoardName] = useState('');
+  
   const [formData, setFormData] = useState({ 
     name: '', 
     email: '', 
@@ -23,7 +35,7 @@ export default function MoodScoutLanding() {
   // API URL - UPDATED FOR PRODUCTION
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-  const etsyCategories = [
+  const zartCategories = [
     "Art & Collectibles",
     "Bags & Purses",
     "Bath & Beauty",
@@ -96,44 +108,96 @@ export default function MoodScoutLanding() {
   // };
 
   
-  // Search functionality (under construction)
+  // Search functionality with SSE (Server-Sent Events) for progressive loading
   const handleSearch = async (e) => {
     e.preventDefault();
-    console.log("DEBUG: Search initiated for:", searchQuery);
+    console.log("🔍 Search initiated for:", searchQuery);
 
     if (!searchQuery.trim()) {
       alert("Please enter a search query or Pinterest URL.");
       return;
     }
 
+    // Reset all states
     setIsSearching(true);
-    setSearchResults([]);
-    setShowSearchResults(false);
+    setSearchStep('');
+    setSearchMessage('Starting search...');
+    setPinterestImages(null);
+    setAnalysisData(null);
+    setProductsData(null);
+    setProcessingTime(null);
+    setBoardName('');
+    setSearchType(null);
+    setShowSearchResults(true);
 
     try {
-      console.log("DEBUG: Calling backend unified search with query:", searchQuery);
-      // Call the unified backend endpoint
-      const response = await fetch(`${API_URL}/api/unified-search`, { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: searchQuery }),
+      // Create EventSource for SSE
+      const encodedQuery = encodeURIComponent(searchQuery);
+      const eventSource = new EventSource(`${API_URL}/api/search/stream?query=${encodedQuery}`);
+      
+      eventSource.addEventListener('status', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('📡 Status:', data);
+        setSearchStep(data.step);
+        setSearchMessage(data.message);
       });
-      const data = await response.json();
-      console.log("DEBUG: Backend response for unified search:", data);
-
-      if (data.success) {
-        setSearchResults(data.results || []);
-        setShowSearchResults(true);
-      } else {
-        console.error("❌ Unified search failed:", data.message);
-        alert(data.message || "An error occurred during search.");
-      }
+      
+      eventSource.addEventListener('pinterest_images', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('🖼️ Pinterest Images received:', data);
+        setPinterestImages(data.images);
+        setBoardName(data.board_name);
+        setSearchType('pinterest');
+      });
+      
+      eventSource.addEventListener('analysis', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('🤖 Analysis received:', data);
+        setAnalysisData(data);
+      });
+      
+      eventSource.addEventListener('products', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('🛍️ Products received:', data);
+        setProductsData(data.products);
+      });
+      
+      eventSource.addEventListener('complete', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('✅ Search complete:', data);
+        setProcessingTime(data.processing_time);
+        setSearchType(data.searchType);
+        setIsSearching(false);
+        setSearchStep('');
+        setSearchMessage('');
+        eventSource.close();
+      });
+      
+      eventSource.addEventListener('error', (event) => {
+        if (event.data) {
+          const data = JSON.parse(event.data);
+          console.error('❌ Search error:', data);
+          alert(data.message || 'An error occurred during search.');
+        }
+        setIsSearching(false);
+        eventSource.close();
+      });
+      
+      // Handle connection errors
+      eventSource.onerror = (error) => {
+        console.error('❌ SSE Connection error:', error);
+        if (eventSource.readyState === EventSource.CLOSED) {
+          console.log('SSE connection closed');
+        } else {
+          alert('Connection error. Please try again.');
+          setIsSearching(false);
+        }
+        eventSource.close();
+      };
+      
     } catch (error) {
       console.error("❌ Search error:", error);
       alert("An unexpected error occurred during search.");
-    } finally {
       setIsSearching(false);
     }
   };
@@ -271,7 +335,7 @@ export default function MoodScoutLanding() {
     {
       icon: <Sparkles className="w-8 h-8" />,
       title: "Smart Matching",
-      description: "Sophisticated similarity scoring finds Etsy products that perfectly match your aesthetic"
+      description: "Sophisticated similarity scoring finds Zart products that perfectly match your aesthetic"
     },
     {
       icon: <ShoppingBag className="w-8 h-8" />,
@@ -421,7 +485,7 @@ export default function MoodScoutLanding() {
                     )}
                     
                     <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border border-gray-300 rounded-xl">
-                      {etsyCategories.map((category, index) => (
+                      {zartCategories.map((category, index) => (
                         <button
                           key={index}
                           type="button"
@@ -531,19 +595,19 @@ export default function MoodScoutLanding() {
             </h1>
             
             <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Discover perfectly matched Etsy products from your Pinterest boards. 
+              Discover perfectly matched Zart products from your Pinterest boards. 
               Let AI understand your style and find the treasures you'll love.
             </p>
 
             {/* Google-style Search Bar - UNDER CONSTRUCTION */}
             <div className="max-w-2xl mx-auto mb-8 relative">
               {/* Under Construction Badge */}
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+              {/* <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
                 <div className="bg-gradient-to-r from-amber-400 to-orange-400 text-white px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium">
                   <Wrench className="w-4 h-4" />
                   <span>Coming Soon</span>
                 </div>
-              </div>
+              </div> */}
 
               <form onSubmit={handleSearch} className="relative">
               {/* className="relative opacity-60 pointer-events-none"> */}
@@ -553,7 +617,7 @@ export default function MoodScoutLanding() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search Etsy products"
+                    placeholder="Search Zart products"
                     // disabled
                     className="w-full pl-14 pr-14 py-5 text-lg border-2 border-gray-200 rounded-full outline-none transition-all shadow-lg bg-gray-50"
                   />
@@ -566,7 +630,7 @@ export default function MoodScoutLanding() {
                     className="bg-gradient-to-r from-gray-400 to-gray-500 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-300 pointer-events-auto">
                     {/* className="bg-gradient-to-r from-gray-400 to-gray-500 text-white px-8 py-3 rounded-full font-medium cursor-not-allowed"> */}
 
-                    Search Etsy
+                    Search Zart
                   </button>
                   <button 
                     type="button"
@@ -588,205 +652,267 @@ export default function MoodScoutLanding() {
         </div>
       </section>
 
-      {/* Search Results Section */}
-      {showSearchResults && searchResults.length > 0 && (
+      {/* Search Results Section - Progressive Loading with SSE */}
+      {showSearchResults && (
         <section className="py-12 px-6 bg-gradient-to-b from-purple-50 to-white">
           <div className="max-w-7xl mx-auto">
-            {console.log('📊 Full Search Results:', searchResults)}
             
-            {/* Results Header */}
-            <div className="text-center mb-10">
-              <h2 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Search Results
-              </h2>
-              <p className="text-gray-600">Found {searchResults.length} items from your Pinterest board</p>
-            </div>
+            {/* Loading Indicator */}
+            {isSearching && (
+              <div className="text-center mb-10">
+                <div className="inline-flex items-center gap-3 px-6 py-4 bg-white rounded-2xl shadow-lg border border-purple-100">
+                  <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
+                  <div className="text-left">
+                    <p className="text-gray-800 font-medium">{searchMessage}</p>
+                    <p className="text-gray-500 text-sm">
+                      {searchStep === 'pinterest' && 'Downloading images from your Pinterest board...'}
+                      {searchStep === 'analysis' && 'Our AI is identifying products, colors, and themes...'}
+                      {searchStep === 'products' && 'Finding the best matching products on ZART...'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Results Header - Shows when we have any data */}
+            {(pinterestImages || productsData) && (
+              <div className="text-center mb-10">
+                <h2 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Search Results
+                </h2>
+                <p className="text-gray-600">
+                  {searchType === 'pinterest' && boardName && (
+                    <>Board: <span className="font-semibold">{boardName}</span> | </>
+                  )}
+                  {pinterestImages && <>{pinterestImages.length} images</>}
+                  {processingTime && <> • Completed in {processingTime}s</>}
+                </p>
+              </div>
+            )}
 
-            {/* Row 1: Pinterest Board Images Gallery */}
-            <div className="mb-12">
+            {/* Row 1: Pinterest Board Images Gallery - Shows immediately when available */}
+            {pinterestImages && pinterestImages.length > 0 && (
+            <div className="mb-12 animate-fadeIn">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
                   <Heart className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800">Pinterest Board Images</h3>
+                <span className="ml-auto text-gray-500 text-sm">{pinterestImages.length} images</span>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {searchResults.map((item, index) => {
-                  console.log(`🖼️ Pinterest Image ${index + 1}:`, item.image_path);
-                  return (
+                {pinterestImages.map((image, index) => (
                   <div 
                     key={`pinterest-${index}`}
                     className="relative group aspect-square rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105"
                   >
                     <img 
-                      src={item.image_path ? `../Backend-master/${item.image_path}` : `https://via.placeholder.com/300x300?text=Image+${index + 1}`}
-                      alt={`Pinterest image ${index + 1}`}
+                      src={image.url || `${API_URL}${image.localUrl}` || `https://via.placeholder.com/300x300?text=Image+${index + 1}`}
+                      alt={`Pinterest ${index + 1}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://via.placeholder.com/300x300?text=Image+${index + 1}`;
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-3 left-3 right-3">
-                        <p className="text-white text-sm font-medium truncate">Image {index + 1}</p>
+                        <p className="text-white text-sm font-medium truncate">Image {image.index || index + 1}</p>
                       </div>
-                    </div>
-                  </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Row 2: AI Descriptions & Keywords */}
-            <div className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-800">AI Analysis & Keywords</h3>
-              </div>
-              <div className="grid gap-6 auto-rows-fr" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-                {searchResults.map((item, index) => (
-                  <div 
-                    key={`ai-${index}`}
-                    className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 flex flex-col">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-purple-600 font-bold text-sm">{index + 1}</span>
-                      </div>
-                      <h4 className="font-semibold text-gray-800">Image Analysis</h4>
-                    </div>
-                    <p className="text-gray-600 mb-4 leading-relaxed flex-grow">
-                      {item.ai_description || 'AI analysis not available'}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {(item.keywords || '').split(',').filter(k => k.trim()).map((keyword, ki) => (
-                        <span 
-                          key={ki}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-sm rounded-full"
-                        >
-                          <Tag className="w-3 h-3" />
-                          {keyword.trim()}
-                        </span>
-                      ))}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+            )}
 
-            {/* Row 3: Product Cards */}
-            <div>
+            {/* Loading placeholder for analysis */}
+            {isSearching && searchStep === 'analysis' && !analysisData && (
+              <div className="mb-12 animate-pulse">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gray-200 rounded-xl"></div>
+                  <div className="h-8 w-48 bg-gray-200 rounded"></div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
+                  <div className="h-24 bg-gray-100 rounded"></div>
+                </div>
+              </div>
+            )}
+
+            {/* Row 2: Unified AI Analysis & Keywords - Shows when analysis is complete */}
+            {analysisData && (
+            <div className="mb-12 animate-fadeIn">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">AI Analysis</h3>
+                {analysisData.model_used && (
+                  <span className="ml-auto text-xs text-gray-400">Model: {analysisData.model_used}</span>
+                )}
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Left: Category, Theme, Summary */}
+                  <div>
+                    <div className="flex flex-wrap gap-3 mb-4">
+                      <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full font-semibold">
+                        {analysisData.category}
+                      </span>
+                      <span className="px-4 py-2 bg-pink-100 text-pink-700 rounded-full font-semibold">
+                        {analysisData.theme}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 leading-relaxed">
+                      {analysisData.summary}
+                    </p>
+                  </div>
+                  
+                  {/* Right: Keywords (Contents + Colors) */}
+                  <div>
+                    <h4 className="font-semibold text-gray-800 mb-3">Keywords & Colors</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {analysisData.contents && analysisData.contents.map((content, idx) => (
+                        <span 
+                          key={`content-${idx}`}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-sm rounded-full"
+                        >
+                          <Tag className="w-3 h-3" />
+                          {content}
+                        </span>
+                      ))}
+                      {analysisData.color_palette && analysisData.color_palette.map((color, idx) => (
+                        <span 
+                          key={`color-${idx}`}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 text-sm rounded-full"
+                        >
+                          {color}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            )}
+
+            {/* Loading placeholder for products */}
+            {isSearching && searchStep === 'products' && !productsData && (
+              <div className="animate-pulse">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gray-200 rounded-xl"></div>
+                  <div className="h-8 w-48 bg-gray-200 rounded"></div>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="bg-white rounded-2xl shadow-md overflow-hidden">
+                      <div className="aspect-square bg-gray-100"></div>
+                      <div className="p-4 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Row 3: Matched Products - Shows when products are available */}
+            {productsData && productsData.length > 0 && (
+            <div className="animate-fadeIn">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
                   <ShoppingBag className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800">Matched Products</h3>
                 <span className="ml-auto text-gray-500 text-sm">
-                  {searchResults.reduce((total, item) => {
-                    let count = 0;
-                    if (item.product_1_name) count++;
-                    if (item.product_2_name) count++;
-                    if (item.product_3_name) count++;
-                    return total + count;
-                  }, 0)} products found
+                  {productsData.length} products found
                 </span>
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {searchResults.flatMap((item, itemIndex) => {
-                  const products = [];
-                  for (let i = 1; i <= 3; i++) {
-                    const productName = item[`product_${i}_name`];
-                    const productUrl = item[`product_${i}_url`];
-                    const productPrice = item[`product_${i}_price`];
-                    const productScore = item[`product_${i}_score`];
-                    const productDescription = item[`product_${i}_description`] || 'No description available';
-                    const productImage = item[`product_${i}_image`];
-                    
-                    console.log(`🛍️ Product ${itemIndex + 1}-${i}:`, { productName, productImage });
-                    
-                    if (productName) {
-                      products.push(
-                        <a
-                          key={`product-${itemIndex}-${i}`}
-                          href={productUrl || '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-200 block"
-                        >
-                          {/* Product Image */}
-                          <div className="aspect-square relative overflow-hidden bg-gray-100">
-                            <img 
-                              src={productImage ? `../Backend-master/${productImage}` : `https://via.placeholder.com/300x300?text=${encodeURIComponent(productName)}`}
-                              alt={productName}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
-                            {productScore && (
-                              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                                <TrendingUp className="w-3 h-3 text-purple-600" />
-                                <span className="text-sm font-semibold text-purple-600">{productScore}%</span>
-                              </div>
-                            )}
+                {productsData.map((product, index) => (
+                    <a
+                      key={`product-${index}`}
+                      href={product.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-200 block relative"
+                    >
+                      {/* Product Image */}
+                      <div className="aspect-square relative overflow-hidden bg-gray-100">
+                        <img 
+                          src={product.image || `https://via.placeholder.com/300x300?text=${encodeURIComponent(product.name || 'Product')}`}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = `https://via.placeholder.com/300x300?text=${encodeURIComponent(product.name || 'Product')}`;
+                          }}
+                        />
+                        {product.match_score !== undefined && (
+                          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                            <TrendingUp className="w-3 h-3 text-purple-600" />
+                            <span className="text-sm font-semibold text-purple-600">{product.match_score.toFixed(1)}%</span>
                           </div>
-                          
-                          {/* Product Info */}
-                          <div className="p-4">
-                            {/* Product Name with hover popover */}
-                            <div className="group/name relative mb-1">
-                              <h4 className="font-semibold text-gray-800 truncate group-hover:text-purple-600 transition-colors cursor-pointer">
-                                {productName}
-                              </h4>
-                              {/* Name Popover - only shows when hovering on name */}
-                              <div className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 invisible group-hover/name:opacity-100 group-hover/name:visible transition-all duration-300 z-50 whitespace-normal">
-                                <p>{productName}</p>
-                                <div className="absolute bottom-0 left-4 transform translate-y-full">
-                                  <div className="border-6 border-transparent border-t-gray-900"></div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {productPrice && (
-                              <p className="text-lg font-bold text-purple-600 mb-2">{productPrice}</p>
-                            )}
-                            
-                            {/* Description with hover popover - only shows when hovering on description */}
-                            <div className="group/desc relative">
-                              <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed cursor-pointer">
-                                {productDescription}
-                              </p>
-                              {/* Description Popover - only shows when hovering on description */}
-                              <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 invisible group-hover/desc:opacity-100 group-hover/desc:visible transition-all duration-300 z-50 max-h-40 overflow-y-auto">
-                                <p className="leading-relaxed">{productDescription}</p>
-                                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
-                                  <div className="border-8 border-transparent border-t-gray-900"></div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* External link indicator */}
-                            <div className="flex items-center gap-1 mt-3 text-purple-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                              <ExternalLink className="w-4 h-4" />
-                              <span>View on ZART</span>
-                            </div>
+                        )}
+                      </div>
+                      
+                      {/* Product Info */}
+                      <div className="p-4">
+                        {/* Product Name */}
+                        <h4 className="font-semibold text-gray-800 line-clamp-2 group-hover:text-purple-600 transition-colors mb-1">
+                          {product.name || 'Untitled Product'}
+                        </h4>
+                        
+                        {product.price && (
+                          <p className="text-lg font-bold text-purple-600 mb-2">{product.price}</p>
+                        )}
+                        
+                        {/* Score Breakdown */}
+                        {product.score_breakdown && searchType === 'pinterest' && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded" title="Content match">C:{product.score_breakdown.content}</span>
+                            <span className="text-xs px-2 py-0.5 bg-green-100 text-green-600 rounded" title="Color match">L:{product.score_breakdown.color}</span>
+                            <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-600 rounded" title="Category match">Cat:{product.score_breakdown.category}</span>
+                            <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-600 rounded" title="Theme match">T:{product.score_breakdown.theme}</span>
                           </div>
-                        </a>
-                      );
-                    }
-                  }
-                  return products;
-                })}
+                        )}
+                        
+                        {/* External link indicator */}
+                        <div className="flex items-center gap-1 mt-3 text-purple-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ExternalLink className="w-4 h-4" />
+                          <span>View on ZART</span>
+                        </div>
+                      </div>
+                      
+                      {/* Hover Popover for Description */}
+                      {product.description && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none">
+                          <div className="p-4 text-white w-full">
+                            <p className="text-sm leading-relaxed line-clamp-4">{product.description}</p>
+                          </div>
+                        </div>
+                      )}
+                    </a>
+                ))}
               </div>
             </div>
+            )}
 
-          </div>
-        </section>
-      )}
+            {/* No Products Found */}
+            {!isSearching && productsData && productsData.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-gray-500">No matching products found. Try a different search.</p>
+              </div>
+            )}
 
-      {/* Loading State */}
-      {isSearching && (
-        <section className="py-20 px-6 bg-gradient-to-b from-purple-50 to-white">
-          <div className="max-w-7xl mx-auto text-center">
-            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white rounded-full shadow-lg">
-              <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-gray-700 font-medium">Analyzing your Pinterest board with AI...</span>
-            </div>
+            {/* Initial state - no results yet and not searching */}
+            {!isSearching && !pinterestImages && !productsData && (
+              <div className="text-center py-10">
+                <p className="text-gray-500">Enter a Pinterest URL or search keyword to find matching products.</p>
+              </div>
+            )}
+
           </div>
         </section>
       )}
@@ -803,7 +929,7 @@ export default function MoodScoutLanding() {
             {[
               { step: "01", title: "Share Your Board", desc: "Paste your Pinterest board URL and let us access your inspiration", icon: <Heart /> },
               { step: "02", title: "AI Analysis", desc: "Our vision models extract style, color, and aesthetic patterns", icon: <Zap /> },
-              { step: "03", title: "Discover Products", desc: "Get ranked Etsy results matching your exact taste", icon: <TrendingUp /> }
+              { step: "03", title: "Discover Products", desc: "Get ranked Zart results matching your exact taste", icon: <TrendingUp /> }
             ].map((item, i) => (
               <div key={i} className="relative group">
                 <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 h-full">
