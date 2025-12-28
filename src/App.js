@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink, Wrench, Loader2 } from 'lucide-react';
+import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
 import logo from './assets/logo.svg';
+
+// Placeholder image for products without images
+const NO_IMAGE_PLACEHOLDER = 'https://www.freeiconspng.com/uploads/no-image-icon-6.png';
 
 export default function MoodScoutLanding() {
   const [scrollY, setScrollY] = useState(0);
@@ -13,6 +16,7 @@ export default function MoodScoutLanding() {
   const [searchStep, setSearchStep] = useState(''); // 'pinterest', 'analysis', 'products'
   const [searchMessage, setSearchMessage] = useState('');
   const [searchType, setSearchType] = useState(null); // 'pinterest' or 'keyword'
+  const [noResultsMessage, setNoResultsMessage] = useState(''); // For handling no results
   
   // Progressive data states
   const [pinterestImages, setPinterestImages] = useState(null);
@@ -128,6 +132,7 @@ export default function MoodScoutLanding() {
     setProcessingTime(null);
     setBoardName('');
     setSearchType(null);
+    setNoResultsMessage('');
     setShowSearchResults(true);
 
     try {
@@ -160,6 +165,11 @@ export default function MoodScoutLanding() {
         const data = JSON.parse(event.data);
         console.log('🛍️ Products received:', data);
         setProductsData(data.products);
+        
+        // Handle no results message
+        if (data.message) {
+          setNoResultsMessage(data.message);
+        }
       });
       
       eventSource.addEventListener('complete', (event) => {
@@ -836,23 +846,31 @@ export default function MoodScoutLanding() {
                       href={product.url || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-200 block relative"
+                      className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-200 block"
                     >
-                      {/* Product Image */}
+                      {/* Product Image with Description Hover */}
                       <div className="aspect-square relative overflow-hidden bg-gray-100">
                         <img 
-                          src={product.image || `https://via.placeholder.com/300x300?text=${encodeURIComponent(product.name || 'Product')}`}
+                          src={product.image || NO_IMAGE_PLACEHOLDER}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = `https://via.placeholder.com/300x300?text=${encodeURIComponent(product.name || 'Product')}`;
+                            e.target.src = NO_IMAGE_PLACEHOLDER;
                           }}
                         />
                         {product.match_score !== undefined && (
-                          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm z-10">
                             <TrendingUp className="w-3 h-3 text-purple-600" />
                             <span className="text-sm font-semibold text-purple-600">{product.match_score.toFixed(1)}%</span>
+                          </div>
+                        )}
+                        {/* Hover Popover for Description - Limited to image area only */}
+                        {product.description && (
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none">
+                            <div className="p-4 text-white w-full">
+                              <p className="text-sm leading-relaxed line-clamp-4">{product.description}</p>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -884,25 +902,22 @@ export default function MoodScoutLanding() {
                           <span>View on ZART</span>
                         </div>
                       </div>
-                      
-                      {/* Hover Popover for Description */}
-                      {product.description && (
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none">
-                          <div className="p-4 text-white w-full">
-                            <p className="text-sm leading-relaxed line-clamp-4">{product.description}</p>
-                          </div>
-                        </div>
-                      )}
                     </a>
                 ))}
               </div>
             </div>
             )}
 
-            {/* No Products Found */}
+            {/* No Products Found - with custom message */}
             {!isSearching && productsData && productsData.length === 0 && (
-              <div className="text-center py-10">
-                <p className="text-gray-500">No matching products found. Try a different search.</p>
+              <div className="animate-fadeIn text-center py-12">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                  <AlertCircle className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">No Results Found</h3>
+                <p className="text-gray-500 max-w-md mx-auto">
+                  {noResultsMessage || 'No matching products found. Try a different search or Pinterest board.'}
+                </p>
               </div>
             )}
 
