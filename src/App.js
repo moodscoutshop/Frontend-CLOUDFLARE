@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
+// import logo from './assets/logo.svg';
 import logo from './assets/logo.svg';
+
 
 // Placeholder image for products without images
 const NO_IMAGE_PLACEHOLDER = 'https://www.freeiconspng.com/uploads/no-image-icon-6.png';
@@ -13,10 +15,32 @@ export default function MoodScoutLanding() {
   
   // Progressive loading states
   const [isSearching, setIsSearching] = useState(false);
-  const [searchStep, setSearchStep] = useState(''); // 'pinterest', 'analysis', 'products'
+  const [searchStep, setSearchStep] = useState(''); // 'pinterest', 'analysis', 'products', 'enriching'
   const [searchMessage, setSearchMessage] = useState('');
   const [searchType, setSearchType] = useState(null); // 'pinterest' or 'keyword'
   const [noResultsMessage, setNoResultsMessage] = useState(''); // For handling no results
+  const [enrichmentProgress, setEnrichmentProgress] = useState({ current: 0, total: 0 }); // Track enrichment progress
+  
+  // Progress bar states
+  const [progressData, setProgressData] = useState({
+    phase: '',           // Current phase: pinterest, analysis, search, complete
+    progress: 0,         // 0-100 percentage
+    subStep: '',         // Detailed sub-step message
+    current: 0,          // Current item (for enrichment)
+    total: 0,            // Total items (for enrichment)
+  });
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [estimatedTime, setEstimatedTime] = useState(68); // Total estimated time (~15+13+40)
+  const [searchStartTime, setSearchStartTime] = useState(null);
+  const [motivationalMessage, setMotivationalMessage] = useState('');
+  const [showProgressBar, setShowProgressBar] = useState(false); // Control progress bar visibility
+  
+  // Segment timing states
+  const [segmentTimes, setSegmentTimes] = useState({
+    pinterest: { startTime: null, endTime: null, elapsed: 0 },
+    analysis: { startTime: null, endTime: null, elapsed: 0 },
+    search: { startTime: null, endTime: null, elapsed: 0 }
+  });
   
   // Progressive data states
   const [pinterestImages, setPinterestImages] = useState(null);
@@ -56,6 +80,188 @@ export default function MoodScoutLanding() {
     "Weddings",
     "Other"
   ];
+
+  // Phase-specific messages for progress bar
+  const phaseMessages = {
+    pinterest: "Exploring your Pinterest board... 🎨",
+    analysis: "AI is studying your aesthetic... 🧠",
+    search: "Finding matching treasures on ZART... 🔍",
+    complete: "Your curated results are ready! ✨"
+  };
+
+  // Segment-specific motivational messages
+  const segmentMotivationalMessages = {
+    pinterest: [
+      "Downloading your inspiration... 📥",
+      "Gathering your aesthetic vibes... ✨",
+      "Capturing your Pinterest magic... 🎨",
+      "Almost done collecting images... 📷"
+    ],
+    analysis: [
+      "AI is reading your style... 🤖",
+      "Understanding your aesthetic... 🎯",
+      "Decoding colors and themes... 🌈",
+      "Creating your style profile... 💎"
+    ],
+    search: [
+      "Hunting for perfect matches... 🔍",
+      "Scouring ZART's treasures... 💍",
+      "Finding hidden gems for you... ✨",
+      "Curating your personalized picks... 🛍️",
+      "Almost there, quality takes time... ⏳"
+    ]
+  };
+
+  // Segment configuration: name, estimated duration, width percentage
+  const segments = [
+    { id: 'pinterest', name: 'Pinterest', estimatedDuration: 15, widthPercent: 22 },
+    { id: 'analysis', name: 'AI Analysis', estimatedDuration: 13, widthPercent: 19 },
+    { id: 'search', name: 'Search', estimatedDuration: 40, widthPercent: 59 }
+  ];
+
+  // Get current segment index
+  const getCurrentSegmentIndex = () => {
+    const phase = progressData.phase;
+    if (phase === 'pinterest' || phase === 'grid') return 0;
+    if (phase === 'analysis') return 1;
+    if (phase === 'products' || phase === 'enriching' || phase === 'search') return 2;
+    if (phase === 'complete') return 3; // All complete
+    return 0;
+  };
+
+  // Get segment status: 'completed', 'active', 'pending'
+  const getSegmentStatus = (segmentIndex) => {
+    const currentIndex = getCurrentSegmentIndex();
+    if (segmentIndex < currentIndex) return 'completed';
+    if (segmentIndex === currentIndex) return 'active';
+    return 'pending';
+  };
+
+  // Motivational messages (friendly & engaging) - fallback
+  const motivationalMessages = [
+    "Almost there! ✨",
+    "Finding perfect matches for you...",
+    "Good things take time 💫",
+    "Your curated results are coming...",
+    "We're close to something great!",
+    "Hang tight, magic in progress... 🪄",
+    "Quality over speed, always 💎",
+    "Discovering hidden gems... 💍",
+    "Building your personalized collection..."
+  ];
+
+  // Elapsed time counter + segment time tracking
+  useEffect(() => {
+    let interval;
+    if (isSearching && searchStartTime) {
+      interval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - searchStartTime) / 1000);
+        setElapsedTime(elapsed);
+        
+        // Update current segment elapsed time
+        const currentSegmentId = segments[getCurrentSegmentIndex()]?.id;
+        if (currentSegmentId && segmentTimes[currentSegmentId]?.startTime && !segmentTimes[currentSegmentId]?.endTime) {
+          setSegmentTimes(prev => ({
+            ...prev,
+            [currentSegmentId]: {
+              ...prev[currentSegmentId],
+              elapsed: Math.floor((Date.now() - prev[currentSegmentId].startTime) / 1000)
+            }
+          }));
+        }
+        
+        // Dynamically extend estimated time if exceeded
+        if (elapsed >= estimatedTime - 5) {
+          setEstimatedTime(prev => prev + 15);
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isSearching, searchStartTime, estimatedTime, progressData.phase]);
+
+  // Track segment transitions
+  useEffect(() => {
+    const phase = progressData.phase;
+    if (!phase || phase === 'complete') return;
+    
+    // Map phase to segment
+    let segmentId = null;
+    if (phase === 'pinterest' || phase === 'grid') segmentId = 'pinterest';
+    else if (phase === 'analysis') segmentId = 'analysis';
+    else if (phase === 'products' || phase === 'enriching' || phase === 'search') segmentId = 'search';
+    
+    if (segmentId && segmentTimes[segmentId] && !segmentTimes[segmentId].startTime) {
+      // Start this segment
+      setSegmentTimes(prev => ({
+        ...prev,
+        [segmentId]: { ...prev[segmentId], startTime: Date.now(), elapsed: 0 }
+      }));
+      
+      // End previous segment
+      const segmentOrder = ['pinterest', 'analysis', 'search'];
+      const currentIdx = segmentOrder.indexOf(segmentId);
+      if (currentIdx > 0) {
+        const prevSegmentId = segmentOrder[currentIdx - 1];
+        if (segmentTimes[prevSegmentId]?.startTime && !segmentTimes[prevSegmentId]?.endTime) {
+          setSegmentTimes(prev => ({
+            ...prev,
+            [prevSegmentId]: {
+              ...prev[prevSegmentId],
+              endTime: Date.now(),
+              elapsed: Math.floor((Date.now() - prev[prevSegmentId].startTime) / 1000)
+            }
+          }));
+        }
+      }
+    }
+  }, [progressData.phase]);
+
+  // Mark all segments complete when done
+  useEffect(() => {
+    if (progressData.phase === 'complete') {
+      setSegmentTimes(prev => {
+        const updated = { ...prev };
+        ['pinterest', 'analysis', 'search'].forEach(id => {
+          if (updated[id]?.startTime && !updated[id]?.endTime) {
+            updated[id] = {
+              ...updated[id],
+              endTime: Date.now(),
+              elapsed: Math.floor((Date.now() - updated[id].startTime) / 1000)
+            };
+          }
+        });
+        return updated;
+      });
+    }
+  }, [progressData.phase]);
+
+  // Motivational message rotation (every 3 seconds) - segment specific
+  useEffect(() => {
+    let interval;
+    if (isSearching) {
+      // Get segment-specific messages or fallback
+      const getRandomMessage = () => {
+        const currentSegmentId = segments[getCurrentSegmentIndex()]?.id;
+        const messages = segmentMotivationalMessages[currentSegmentId] || motivationalMessages;
+        return messages[Math.floor(Math.random() * messages.length)];
+      };
+      
+      // Set initial message
+      setMotivationalMessage(getRandomMessage());
+      
+      interval = setInterval(() => {
+        setMotivationalMessage(getRandomMessage());
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isSearching, progressData.phase]);
+
+  // Show progress bar when searching starts and keep visible after completion
+  useEffect(() => {
+    if (isSearching) {
+      setShowProgressBar(true);
+    }
+  }, [isSearching]);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -133,7 +339,21 @@ export default function MoodScoutLanding() {
     setBoardName('');
     setSearchType(null);
     setNoResultsMessage('');
+    setEnrichmentProgress({ current: 0, total: 0 });
     setShowSearchResults(true);
+    
+    // Initialize progress bar
+    setProgressData({ phase: 'pinterest', progress: 0, subStep: '', current: 0, total: 0 });
+    setSearchStartTime(Date.now());
+    setElapsedTime(0);
+    setEstimatedTime(68); // Total estimated time in seconds (~15+13+40)
+    
+    // Reset segment times
+    setSegmentTimes({
+      pinterest: { startTime: Date.now(), endTime: null, elapsed: 0 },
+      analysis: { startTime: null, endTime: null, elapsed: 0 },
+      search: { startTime: null, endTime: null, elapsed: 0 }
+    });
 
     try {
       // Create EventSource for SSE
@@ -145,6 +365,18 @@ export default function MoodScoutLanding() {
         console.log('📡 Status:', data);
         setSearchStep(data.step);
         setSearchMessage(data.message);
+      });
+
+      eventSource.addEventListener('progress', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('📊 Progress:', data);
+        setProgressData({
+          phase: data.phase,
+          progress: data.progress,
+          subStep: data.subStep || '',
+          current: data.current || 0,
+          total: data.total || 0
+        });
       });
       
       eventSource.addEventListener('pinterest_images', (event) => {
@@ -161,15 +393,71 @@ export default function MoodScoutLanding() {
         setAnalysisData(data);
       });
       
-      eventSource.addEventListener('products', (event) => {
+      // Handle basic products (without descriptions/scores)
+      eventSource.addEventListener('products_basic', (event) => {
         const data = JSON.parse(event.data);
-        console.log('🛍️ Products received:', data);
+        console.log('🛍️ Basic Products received:', data);
         setProductsData(data.products);
+        setEnrichmentProgress({ current: 0, total: data.total_products });
         
         // Handle no results message
         if (data.message) {
           setNoResultsMessage(data.message);
         }
+      });
+      
+      // Handle legacy 'products' event (full products with descriptions/scores)
+      eventSource.addEventListener('products', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('🛍️ Products received (legacy):', data);
+        setProductsData(data.products);
+        
+        if (data.message) {
+          setNoResultsMessage(data.message);
+        }
+      });
+      
+      // Handle individual product description updates
+      eventSource.addEventListener('product_description', (event) => {
+        const data = JSON.parse(event.data);
+        console.log(`📝 Description [${data.index}]:`, data.description?.substring(0, 50) + '...');
+        
+        setProductsData(prevProducts => {
+          if (!prevProducts) return prevProducts;
+          const updated = [...prevProducts];
+          if (updated[data.index]) {
+            updated[data.index] = {
+              ...updated[data.index],
+              description: data.description
+            };
+          }
+          return updated;
+        });
+      });
+      
+      // Handle individual product score updates
+      eventSource.addEventListener('product_score', (event) => {
+        const data = JSON.parse(event.data);
+        console.log(`📊 Score [${data.index}]:`, data.match_score);
+        
+        setProductsData(prevProducts => {
+          if (!prevProducts) return prevProducts;
+          const updated = [...prevProducts];
+          if (updated[data.index]) {
+            updated[data.index] = {
+              ...updated[data.index],
+              match_score: data.match_score,
+              score_breakdown: data.score_breakdown
+            };
+          }
+          return updated;
+        });
+        
+        // Update enrichment progress
+        setEnrichmentProgress(prev => ({
+          ...prev,
+          current: prev.current + 1
+        }));
       });
       
       eventSource.addEventListener('complete', (event) => {
@@ -180,6 +468,8 @@ export default function MoodScoutLanding() {
         setIsSearching(false);
         setSearchStep('');
         setSearchMessage('');
+        // Set progress to complete
+        setProgressData({ phase: 'complete', progress: 100, subStep: '', current: 0, total: 0 });
         eventSource.close();
       });
       
@@ -667,18 +957,117 @@ export default function MoodScoutLanding() {
         <section className="py-12 px-6 bg-gradient-to-b from-purple-50 to-white">
           <div className="max-w-7xl mx-auto">
             
-            {/* Loading Indicator */}
-            {isSearching && (
-              <div className="text-center mb-10">
-                <div className="inline-flex items-center gap-3 px-6 py-4 bg-white rounded-2xl shadow-lg border border-purple-100">
-                  <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
-                  <div className="text-left">
-                    <p className="text-gray-800 font-medium">{searchMessage}</p>
-                    <p className="text-gray-500 text-sm">
-                      {searchStep === 'pinterest' && 'Downloading images from your Pinterest board...'}
-                      {searchStep === 'analysis' && 'Our AI is identifying products, colors, and themes...'}
-                      {searchStep === 'products' && 'Finding the best matching products on ZART...'}
+            {/* Interactive Segmented Progress Tracker */}
+            {showProgressBar && (
+              <div className="max-w-3xl mx-auto mb-10">
+                <div className="bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
+                  {/* Header with Elapsed Time */}
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${progressData.phase === 'complete' ? 'bg-green-500' : 'bg-purple-500 animate-pulse'}`}></div>
+                      <span className="text-gray-700 font-medium">
+                        {progressData.phase === 'complete' ? 'Completed' : 'Processing'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-gray-600">
+                        <span className="font-medium text-purple-600">{elapsedTime}s</span> elapsed
+                      </span>
+                      {progressData.phase !== 'complete' && (
+                        <span className="text-gray-500">
+                          ~{Math.max(0, estimatedTime - elapsedTime)}s left
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Segmented Progress Bar */}
+                  <div className="flex items-stretch h-14 rounded-full overflow-hidden bg-gray-100 mb-4 shadow-inner">
+                    {segments.map((segment, index) => {
+                      const status = getSegmentStatus(index);
+                      const segmentTime = segmentTimes[segment.id];
+                      const isComplete = status === 'completed' || progressData.phase === 'complete';
+                      const isActive = status === 'active' && progressData.phase !== 'complete';
+                      const isPending = status === 'pending';
+                      
+                      return (
+                        <div
+                          key={segment.id}
+                          className={`relative flex flex-col items-center justify-center transition-all duration-500 ${
+                            index < segments.length - 1 ? 'border-r-2 border-white/50' : ''
+                          } ${
+                            isComplete 
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
+                              : isActive 
+                                ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 bg-[length:200%_100%] animate-gradient-x text-white' 
+                                : 'bg-gray-200 text-gray-400'
+                          }`}
+                          style={{ width: `${segment.widthPercent}%` }}
+                        >
+                          {/* Pulsing overlay for active segment */}
+                          {isActive && (
+                            <div className="absolute inset-0 bg-white/20 animate-pulse rounded-inherit"></div>
+                          )}
+                          
+                          {/* Segment Content */}
+                          <div className="relative z-10 flex flex-col items-center px-2">
+                            {/* Segment Name */}
+                            <span className={`font-semibold text-xs sm:text-sm truncate max-w-full ${
+                              isComplete ? 'text-white' : isActive ? 'text-white' : 'text-gray-500'
+                            }`}>
+                              {segment.name}
+                            </span>
+                            
+                            {/* Time Display */}
+                            <span className={`text-[10px] sm:text-xs mt-0.5 ${
+                              isComplete ? 'text-green-100' : isActive ? 'text-purple-100' : 'text-gray-400'
+                            }`}>
+                              {isComplete && segmentTime?.elapsed > 0 
+                                ? `${segmentTime.elapsed}s ✓`
+                                : isActive && segmentTime?.elapsed > 0
+                                  ? `${segmentTime.elapsed}s`
+                                  : `~${segment.estimatedDuration}s`
+                              }
+                            </span>
+                          </div>
+                          
+                          {/* Completion checkmark for completed segments */}
+                          {isComplete && (
+                            <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
+                              <svg className="w-3 h-3 sm:w-4 sm:h-4 text-green-100" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Status Message */}
+                  <div className="text-center">
+                    <p className={`font-semibold mb-1 ${
+                      progressData.phase === 'complete' ? 'text-green-600' : 'text-purple-700'
+                    }`}>
+                      {progressData.phase === 'complete' 
+                        ? phaseMessages.complete
+                        : phaseMessages[segments[getCurrentSegmentIndex()]?.id] || 'Processing...'
+                      }
                     </p>
+                    
+                    {/* Motivational Message */}
+                    {progressData.phase !== 'complete' && (
+                      <p className="text-gray-500 text-sm italic animate-fade-in-out">
+                        {motivationalMessage}
+                      </p>
+                    )}
+                    
+                    {/* Completion Summary */}
+                    {progressData.phase === 'complete' && (
+                      <p className="text-gray-500 text-sm">
+                        Total time: <span className="font-medium text-purple-600">{elapsedTime}s</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -859,7 +1248,7 @@ export default function MoodScoutLanding() {
                             e.target.src = NO_IMAGE_PLACEHOLDER;
                           }}
                         />
-                        {product.match_score !== undefined && (
+                        {product.match_score != null && (
                           <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm z-10">
                             <TrendingUp className="w-3 h-3 text-purple-600" />
                             <span className="text-sm font-semibold text-purple-600">{product.match_score.toFixed(1)}%</span>
