@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink, Loader2, AlertCircle, Calendar, Clock } from 'lucide-react';
 // import logo from './assets/logo.svg';
 import logo from './assets/logo.svg';
 
@@ -12,6 +12,8 @@ export default function MoodScoutLanding() {
   const [showModal, setShowModal] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showArticleModal, setShowArticleModal] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
   
   // Progressive loading states
   const [isSearching, setIsSearching] = useState(false);
@@ -48,7 +50,7 @@ export default function MoodScoutLanding() {
   const [productsData, setProductsData] = useState(null);
   const [processingTime, setProcessingTime] = useState(null);
   const [boardName, setBoardName] = useState('');
-  
+  const [ebayWidgetData, setEbayWidgetData] = useState(null); // eBay widget configuration  
   const [formData, setFormData] = useState({ 
     name: '', 
     email: '', 
@@ -63,7 +65,7 @@ export default function MoodScoutLanding() {
   // API URL - UPDATED FOR PRODUCTION
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-  const zartCategories = [
+  const ebayCategories = [
     "Art & Collectibles",
     "Bags & Purses",
     "Bath & Beauty",
@@ -81,11 +83,57 @@ export default function MoodScoutLanding() {
     "Other"
   ];
 
+  // Dummy articles data - easily replaceable with API data
+  const articles = [
+    {
+      id: 1,
+      title: "10 Hidden Gems on eBay You Need to Know About",
+      excerpt: "Discover the secret categories and search techniques that reveal eBay's most unique treasures.",
+      content: "eBay is home to millions of listings, but the real treasures are often hidden in plain sight. In this guide, we'll explore unconventional search strategies, lesser-known categories, and expert tips for finding one-of-a-kind items that match your aesthetic. From vintage home decor to rare collectibles, learn how to navigate eBay like a pro and uncover deals that others miss.",
+      image: "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=800&h=600&fit=crop",
+      author: "Sarah Mitchell",
+      date: "January 5, 2025",
+      readTime: "5 min read",
+      category: "Shopping Tips",
+      tags: ["eBay", "Shopping", "Deals"]
+    },
+    {
+      id: 2,
+      title: "How to Score Designer Items at 70% Off on eBay",
+      excerpt: "Master the art of finding authentic luxury goods at unbeatable prices with these proven strategies.",
+      content: "Shopping for designer items on eBay can save you thousands, but it requires knowledge and strategy. This comprehensive guide covers authentication tips, timing your purchases for maximum savings, understanding seller ratings, and negotiating like a professional buyer. Whether you're after luxury handbags, watches, or fashion pieces, learn how to build a designer collection without breaking the bank.",
+      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop",
+      author: "Marcus Chen",
+      date: "December 28, 2024",
+      readTime: "7 min read",
+      category: "Luxury Shopping",
+      tags: ["Designer", "Luxury", "Deals"]
+    },
+    {
+      id: 3,
+      title: "eBay vs. Other Marketplaces: Why eBay Wins for Unique Finds",
+      excerpt: "Compare eBay with other online marketplaces and discover why it's the go-to platform for distinctive items.",
+      content: "In the crowded world of online marketplaces, eBay stands out for several key reasons. This article breaks down the advantages of eBay's auction system, its vast selection of vintage and rare items, buyer protection policies, and global reach. We'll compare pricing, variety, and user experience across major platforms to show why eBay remains unmatched for discovering unique, personality-driven products that align with your aesthetic vision.",
+      image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=600&fit=crop",
+      author: "Emily Rodriguez",
+      date: "December 20, 2024",
+      readTime: "6 min read",
+      category: "Marketplace Comparison",
+      tags: ["eBay", "Shopping", "Comparison"]
+    }
+  ];
+
+  // Handle article click
+  const handleArticleClick = (article) => {
+    setSelectedArticle(article);
+    setShowArticleModal(true);
+  };
+
   // Phase-specific messages for progress bar
   const phaseMessages = {
     pinterest: "Exploring your Pinterest board... 🎨",
     analysis: "AI is studying your aesthetic... 🧠",
-    search: "Finding matching treasures on ZART... 🔍",
+    search: "Finding matching treasures on eBay... 🔍",
     complete: "Your curated results are ready! ✨"
   };
 
@@ -105,7 +153,7 @@ export default function MoodScoutLanding() {
     ],
     search: [
       "Hunting for perfect matches... 🔍",
-      "Scouring ZART's treasures... 💍",
+      "Scouring eBay's marketplace... 💍",
       "Finding hidden gems for you... ✨",
       "Curating your personalized picks... 🛍️",
       "Almost there, quality takes time... ⏳"
@@ -341,6 +389,7 @@ export default function MoodScoutLanding() {
     setNoResultsMessage('');
     setEnrichmentProgress({ current: 0, total: 0 });
     setShowSearchResults(true);
+    setEbayWidgetData(null); // Reset eBay widget data
     
     // Initialize progress bar
     setProgressData({ phase: 'pinterest', progress: 0, subStep: '', current: 0, total: 0 });
@@ -399,6 +448,12 @@ export default function MoodScoutLanding() {
         console.log('🛍️ Basic Products received:', data);
         setProductsData(data.products);
         setEnrichmentProgress({ current: 0, total: data.total_products });
+        
+        // Capture eBay widget data if available
+        if (data.ebay_widget) {
+          console.log('🏷️ eBay Widget data received:', data.ebay_widget);
+          setEbayWidgetData(data.ebay_widget);
+        }
         
         // Handle no results message
         if (data.message) {
@@ -635,12 +690,12 @@ export default function MoodScoutLanding() {
     {
       icon: <Sparkles className="w-8 h-8" />,
       title: "Smart Matching",
-      description: "Sophisticated similarity scoring finds Zart products that perfectly match your aesthetic"
+      description: "Sophisticated similarity scoring finds eBay products that perfectly match your aesthetic"
     },
     {
       icon: <ShoppingBag className="w-8 h-8" />,
       title: "Curated Results",
-      description: "Ranked by relevance, discover handmade treasures that align with your vision"
+      description: "Ranked by relevance, discover amazing deals that align with your vision"
     }
   ];
 
@@ -785,7 +840,7 @@ export default function MoodScoutLanding() {
                     )}
                     
                     <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border border-gray-300 rounded-xl">
-                      {zartCategories.map((category, index) => (
+                      {ebayCategories.map((category, index) => (
                         <button
                           key={index}
                           type="button"
@@ -874,6 +929,158 @@ export default function MoodScoutLanding() {
         </div>
       )}
 
+      {/* Article Modal */}
+      {showArticleModal && selectedArticle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl relative my-8 overflow-hidden">
+            <button
+              onClick={() => {
+                setShowArticleModal(false);
+                setSelectedArticle(null);
+              }}
+              className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm text-gray-600 hover:text-gray-900 transition-colors rounded-full p-2 shadow-lg"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Article Header Image */}
+            <div className="relative h-64 md:h-80 overflow-hidden">
+              <img 
+                src={selectedArticle.image}
+                alt={selectedArticle.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <span className="inline-block bg-purple-500 text-white text-xs px-3 py-1 rounded-full mb-3">
+                  {selectedArticle.category}
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold text-white">
+                  {selectedArticle.title}
+                </h2>
+              </div>
+            </div>
+
+            {/* Article Content */}
+            <div className="p-8 max-h-[60vh] overflow-y-auto">
+              {/* Article Meta */}
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  <span>{selectedArticle.author}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{selectedArticle.date}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span>{selectedArticle.readTime}</span>
+                </div>
+              </div>
+
+              {/* Article Body */}
+              <div className="prose prose-lg max-w-none">
+                <p className="text-gray-700 leading-relaxed text-lg mb-6">
+                  {selectedArticle.content}
+                </p>
+              </div>
+
+              {/* Article Tags */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="flex flex-wrap gap-2">
+                  {selectedArticle.tags.map((tag, index) => (
+                    <span 
+                      key={index}
+                      className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm"
+                    >
+                      <Tag className="w-3 h-3" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Article Modal */}
+      {showArticleModal && selectedArticle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl relative my-8 overflow-hidden">
+            <button
+              onClick={() => {
+                setShowArticleModal(false);
+                setSelectedArticle(null);
+              }}
+              className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm text-gray-600 hover:text-gray-900 transition-colors rounded-full p-2 shadow-lg"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Article Header Image */}
+            <div className="relative h-64 md:h-80 overflow-hidden">
+              <img 
+                src={selectedArticle.image}
+                alt={selectedArticle.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <span className="inline-block bg-purple-500 text-white text-xs px-3 py-1 rounded-full mb-3">
+                  {selectedArticle.category}
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold text-white">
+                  {selectedArticle.title}
+                </h2>
+              </div>
+            </div>
+
+            {/* Article Content */}
+            <div className="p-8 max-h-[60vh] overflow-y-auto">
+              {/* Article Meta */}
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  <span>{selectedArticle.author}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{selectedArticle.date}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span>{selectedArticle.readTime}</span>
+                </div>
+              </div>
+
+              {/* Article Body */}
+              <div className="prose prose-lg max-w-none">
+                <p className="text-gray-700 leading-relaxed text-lg mb-6">
+                  {selectedArticle.content}
+                </p>
+              </div>
+
+              {/* Article Tags */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="flex flex-wrap gap-2">
+                  {selectedArticle.tags.map((tag, index) => (
+                    <span 
+                      key={index}
+                      className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm"
+                    >
+                      <Tag className="w-3 h-3" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section with Search - UNDER CONSTRUCTION */}
       <section className="relative pt-32 pb-20 px-6 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-purple-50/50 via-pink-50/30 to-white"></div>
@@ -895,7 +1102,7 @@ export default function MoodScoutLanding() {
             </h1>
             
             <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Discover perfectly matched Zart products from your Pinterest boards. 
+              Discover perfectly matched eBay products from your Pinterest boards. 
               Let AI understand your style and find the treasures you'll love.
             </p>
 
@@ -917,7 +1124,7 @@ export default function MoodScoutLanding() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search Zart products"
+                    placeholder="Search eBay products"
                     // disabled
                     className="w-full pl-14 pr-14 py-5 text-lg border-2 border-gray-200 rounded-full outline-none transition-all shadow-lg bg-gray-50"
                   />
@@ -930,7 +1137,7 @@ export default function MoodScoutLanding() {
                     className="bg-gradient-to-r from-gray-400 to-gray-500 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-300 pointer-events-auto">
                     {/* className="bg-gradient-to-r from-gray-400 to-gray-500 text-white px-8 py-3 rounded-full font-medium cursor-not-allowed"> */}
 
-                    Search Zart
+                    Search eBay
                   </button>
                   <button 
                     type="button"
@@ -1223,11 +1430,45 @@ export default function MoodScoutLanding() {
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
                   <ShoppingBag className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800">Matched Products</h3>
+                <h3 className="text-2xl font-bold text-gray-800">Matched Products from eBay</h3>
                 <span className="ml-auto text-gray-500 text-sm">
                   {productsData.length} products found
                 </span>
               </div>
+              
+              {/* ============================================================================
+                  eBay Partner Network Widget - COMMENTED OUT (No Campaign ID yet)
+                  Uncomment when you have your eBay Partner Network Campaign ID
+                  ============================================================================ */}
+              {/*
+              {ebayWidgetData && (
+                <div className="mb-8 p-6 bg-white rounded-2xl shadow-md border border-gray-100">
+                  <div className="text-center mb-4">
+                    <p className="text-gray-600 text-sm mb-2">Browse these curated eBay listings:</p>
+                    <a 
+                      href={ebayWidgetData.searchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-300"
+                    >
+                      <ShoppingBag className="w-5 h-5" />
+                      View All on eBay
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                  
+                  <div id="ebay-widget-container" className="min-h-[400px] bg-gray-50 rounded-xl p-4 flex items-center justify-center">
+                    <div className="text-center text-gray-500">
+                      <p className="font-medium mb-2">eBay Partner Network Widget</p>
+                      <p className="text-sm">Configure your Campaign ID in .env to enable the widget</p>
+                      <p className="text-xs mt-2 text-gray-400">Item IDs: {ebayWidgetData.itemIds?.slice(0, 5).join(', ')}...</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              */}
+              
+              {/* Custom Product Cards - Display eBay results */}
               <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {productsData.map((product, index) => (
                     <a
@@ -1254,7 +1495,13 @@ export default function MoodScoutLanding() {
                             <span className="text-sm font-semibold text-purple-600">{product.match_score.toFixed(1)}%</span>
                           </div>
                         )}
-                        {/* Hover Popover for Description - Limited to image area only */}
+                        {/* Condition badge for eBay products */}
+                        {product.condition && (
+                          <div className="absolute top-3 left-3 bg-green-500/90 text-white text-xs px-2 py-1 rounded-full z-10">
+                            {product.condition}
+                          </div>
+                        )}
+                        {/* Hover Popover for Description */}
                         {product.description && (
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none">
                             <div className="p-4 text-white w-full">
@@ -1272,7 +1519,12 @@ export default function MoodScoutLanding() {
                         </h4>
                         
                         {product.price && (
-                          <p className="text-lg font-bold text-purple-600 mb-2">{product.price}</p>
+                          <p className="text-lg font-bold text-green-600 mb-2">{product.price}</p>
+                        )}
+                        
+                        {/* Seller info for eBay */}
+                        {product.seller && (
+                          <p className="text-xs text-gray-500 mb-2">Seller: {product.seller}</p>
                         )}
                         
                         {/* Score Breakdown */}
@@ -1286,9 +1538,9 @@ export default function MoodScoutLanding() {
                         )}
                         
                         {/* External link indicator */}
-                        <div className="flex items-center gap-1 mt-3 text-purple-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 mt-3 text-blue-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                           <ExternalLink className="w-4 h-4" />
-                          <span>View on ZART</span>
+                          <span>View on eBay</span>
                         </div>
                       </div>
                     </a>
@@ -1333,7 +1585,7 @@ export default function MoodScoutLanding() {
             {[
               { step: "01", title: "Share Your Board", desc: "Paste your Pinterest board URL and let us access your inspiration", icon: <Heart /> },
               { step: "02", title: "AI Analysis", desc: "Our vision models extract style, color, and aesthetic patterns", icon: <Zap /> },
-              { step: "03", title: "Discover Products", desc: "Get ranked Zart results matching your exact taste", icon: <TrendingUp /> }
+              { step: "03", title: "Discover Products", desc: "Get ranked eBay results matching your exact taste", icon: <TrendingUp /> }
             ].map((item, i) => (
               <div key={i} className="relative group">
                 <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 h-full">
@@ -1378,6 +1630,91 @@ export default function MoodScoutLanding() {
           </div>
         </div>
       </section>
+
+      {/* Blog/Articles Section */}
+      <section id="blog" className="py-20 px-6 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Latest Articles</h2>
+            <p className="text-xl text-gray-600">Tips, tricks, and insights for smarter eBay shopping</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {articles.map((article) => (
+              <article 
+                key={article.id}
+                onClick={() => handleArticleClick(article)}
+                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200 cursor-pointer"
+              >
+                {/* Article Image */}
+                <div className="aspect-video relative overflow-hidden bg-gray-100">
+                  <img 
+                    src={article.image}
+                    alt={article.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-purple-500 text-white text-xs px-3 py-1 rounded-full font-medium">
+                      {article.category}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Article Content */}
+                <div className="p-6">
+                  {/* Article Meta */}
+                  <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>{article.date}</span>
+                    </div>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>{article.readTime}</span>
+                    </div>
+                  </div>
+
+                  {/* Article Title */}
+                  <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-purple-600 transition-colors line-clamp-2">
+                    {article.title}
+                  </h3>
+
+                  {/* Article Excerpt */}
+                  <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                    {article.excerpt}
+                  </p>
+
+                  {/* Author */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <User className="w-4 h-4" />
+                      <span>{article.author}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-purple-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span>Read More</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* View All Button */}
+          <div className="text-center">
+            <button
+              onClick={() => {/* Will link to blog page in future */}}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            >
+              View All Articles
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      
 
       {/* CTA Section */}
       <section className="py-20 px-6">
