@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink, Loader2, AlertCircle, Calendar, Clock } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { ArrowRight, Sparkles, Search, ShoppingBag, Heart, TrendingUp, Zap, X, Mail, User, CheckCircle, Phone, MessageSquare, Tag, ExternalLink, Loader2, AlertCircle, Calendar, Clock, Filter } from 'lucide-react';
 // import logo from './assets/logo.svg';
 import logo from './assets/logo.svg';
+import { KeywordFilterBadges, CategoryDropdown, filterProducts, getUniqueKeywords } from './components/ProductFilters';
 
 
 // Placeholder image for products without images
@@ -51,6 +52,11 @@ export default function MoodScoutLanding() {
   const [processingTime, setProcessingTime] = useState(null);
   const [boardName, setBoardName] = useState('');
   const [ebayWidgetData, setEbayWidgetData] = useState(null); // eBay widget configuration  
+  
+  // Filter states for products
+  const [selectedKeywordFilters, setSelectedKeywordFilters] = useState([]);
+  const [selectedCategoryFilters, setSelectedCategoryFilters] = useState([]);
+  
   const [formData, setFormData] = useState({ 
     name: '', 
     email: '', 
@@ -122,6 +128,56 @@ export default function MoodScoutLanding() {
       tags: ["eBay", "Shopping", "Comparison"]
     }
   ];
+
+  // ============================================================================
+  // FILTERING LOGIC
+  // ============================================================================
+  
+  // Get unique keywords from products for filter badges
+  const availableKeywords = useMemo(() => {
+    if (!productsData || productsData.length === 0) return [];
+    return getUniqueKeywords(productsData);
+  }, [productsData]);
+
+  // Filter products based on selected keyword and category filters
+  const filteredProducts = useMemo(() => {
+    if (!productsData || productsData.length === 0) return [];
+    return filterProducts(productsData, selectedKeywordFilters, selectedCategoryFilters);
+  }, [productsData, selectedKeywordFilters, selectedCategoryFilters]);
+
+  // Handle keyword filter toggle
+  const handleKeywordFilterToggle = useCallback((keyword) => {
+    setSelectedKeywordFilters(prev => 
+      prev.includes(keyword)
+        ? prev.filter(k => k !== keyword)
+        : [...prev, keyword]
+    );
+  }, []);
+
+  // Clear all keyword filters
+  const handleClearKeywordFilters = useCallback(() => {
+    setSelectedKeywordFilters([]);
+  }, []);
+
+  // Handle category filter toggle
+  const handleCategoryFilterToggle = useCallback((categoryPath) => {
+    setSelectedCategoryFilters(prev => 
+      prev.includes(categoryPath)
+        ? prev.filter(c => c !== categoryPath)
+        : [...prev, categoryPath]
+    );
+  }, []);
+
+  // Clear all category filters
+  const handleClearCategoryFilters = useCallback(() => {
+    setSelectedCategoryFilters([]);
+  }, []);
+
+  // Reset all filters when new search starts
+  const resetFilters = useCallback(() => {
+    setSelectedKeywordFilters([]);
+    setSelectedCategoryFilters([]);
+  }, []);
 
   // Handle article click
   const handleArticleClick = (article) => {
@@ -390,6 +446,7 @@ export default function MoodScoutLanding() {
     setEnrichmentProgress({ current: 0, total: 0 });
     setShowSearchResults(true);
     setEbayWidgetData(null); // Reset eBay widget data
+    resetFilters(); // Reset all filters when new search starts
     
     // Initialize progress bar
     setProgressData({ phase: 'pinterest', progress: 0, subStep: '', current: 0, total: 0 });
@@ -1374,32 +1431,68 @@ export default function MoodScoutLanding() {
                     </p>
                   </div>
                   
-                  {/* Right: Keywords (Contents + Colors) */}
+                  {/* Right: Clickable Keywords (Contents) + Colors */}
                   <div>
-                    <h4 className="font-semibold text-gray-800 mb-3">Keywords & Colors</h4>
+                    <h4 className="font-semibold text-gray-800 mb-3">
+                      Keywords & Colors
+                      {selectedKeywordFilters.length > 0 && (
+                        <span className="ml-2 text-xs font-normal text-purple-600">
+                          (Click to filter products)
+                        </span>
+                      )}
+                    </h4>
                     <div className="flex flex-wrap gap-2">
-                      {analysisData.contents && analysisData.contents.map((content, idx) => (
-                        <span 
-                          key={`content-${idx}`}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-sm rounded-full"
-                        >
-                          <Tag className="w-3 h-3" />
-                          {content}
-                        </span>
-                      ))}
-                      {analysisData.color_palette && analysisData.color_palette.map((color, idx) => (
-                        <span 
-                          key={`color-${idx}`}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 text-sm rounded-full"
-                        >
-                          {color}
-                        </span>
-                      ))}
+                      {/* Clickable keyword filter badges */}
+                      <KeywordFilterBadges
+                        keywords={availableKeywords}
+                        selectedKeywords={selectedKeywordFilters}
+                        onKeywordToggle={handleKeywordFilterToggle}
+                        onClearAll={handleClearKeywordFilters}
+                      />
                     </div>
+                    {/* Color palette badges (non-clickable) */}
+                    {analysisData.color_palette && analysisData.color_palette.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
+                        {analysisData.color_palette.map((color, idx) => (
+                          <span 
+                            key={`color-${idx}`}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 text-sm rounded-full"
+                          >
+                            {color}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
+            )}
+
+            {/* Scoring Legend */}
+            {analysisData && (
+              <div className="mb-12 flex flex-wrap items-center justify-center gap-6 bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-purple-100 animate-fadeIn">
+                <span className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-purple-500" />
+                  Match Scoring Legend:
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded font-bold">C</span>
+                  <span className="text-xs font-medium text-gray-600">Content Match</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-0.5 bg-green-100 text-green-600 rounded font-bold">L</span>
+                  <span className="text-xs font-medium text-gray-600">Color Match</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-600 rounded font-bold">Cat</span>
+                  <span className="text-xs font-medium text-gray-600">Category Match</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-600 rounded font-bold">T</span>
+                  <span className="text-xs font-medium text-gray-600">Theme Match</span>
+                </div>
+              </div>
             )}
 
             {/* Loading placeholder for products */}
@@ -1426,15 +1519,76 @@ export default function MoodScoutLanding() {
             {/* Row 3: Matched Products - Shows when products are available */}
             {productsData && productsData.length > 0 && (
             <div className="animate-fadeIn">
-              <div className="flex items-center gap-3 mb-6">
+              {/* Header with Category Dropdown */}
+              <div className="flex flex-wrap items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
                   <ShoppingBag className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800">Matched Products from eBay</h3>
-                <span className="ml-auto text-gray-500 text-sm">
-                  {productsData.length} products found
+                
+                {/* Category Filter Dropdown - centered */}
+                <div className="flex-1 flex justify-center">
+                  <CategoryDropdown
+                    products={productsData}
+                    selectedCategories={selectedCategoryFilters}
+                    onCategoryToggle={handleCategoryFilterToggle}
+                    onClearCategories={handleClearCategoryFilters}
+                  />
+                </div>
+                
+                {/* Dynamic product count */}
+                <span className="text-gray-500 text-sm">
+                  {filteredProducts.length === productsData.length 
+                    ? `${productsData.length} products found`
+                    : `${filteredProducts.length} of ${productsData.length} products`
+                  }
                 </span>
               </div>
+              
+              {/* Active Filters Summary */}
+              {(selectedKeywordFilters.length > 0 || selectedCategoryFilters.length > 0) && (
+                <div className="mb-6 p-4 bg-purple-50 rounded-xl border border-purple-100">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Filter className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium text-purple-700">Active Filters:</span>
+                    {selectedKeywordFilters.map((kw, idx) => (
+                      <span 
+                        key={`active-kw-${idx}`}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-purple-200 text-purple-800 text-xs rounded-full"
+                      >
+                        <Tag className="w-3 h-3" />
+                        {kw}
+                        <button 
+                          onClick={() => handleKeywordFilterToggle(kw)}
+                          className="hover:text-purple-900"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                    {selectedCategoryFilters.map((cat, idx) => (
+                      <span 
+                        key={`active-cat-${idx}`}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-pink-200 text-pink-800 text-xs rounded-full"
+                      >
+                        {cat.split(' > ').pop()}
+                        <button 
+                          onClick={() => handleCategoryFilterToggle(cat)}
+                          className="hover:text-pink-900"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <button
+                      onClick={() => { handleClearKeywordFilters(); handleClearCategoryFilters(); }}
+                      className="ml-2 text-xs text-purple-600 hover:text-purple-800 underline"
+                    >
+                      Clear all filters
+                    </button>
+                  </div>
+                </div>
+              )}
               
               {/* ============================================================================
                   eBay Partner Network Widget - COMMENTED OUT (No Campaign ID yet)
@@ -1468,11 +1622,32 @@ export default function MoodScoutLanding() {
               )}
               */}
               
-              {/* Custom Product Cards - Display eBay results */}
+              {/* No results after filtering */}
+              {filteredProducts.length === 0 && (selectedKeywordFilters.length > 0 || selectedCategoryFilters.length > 0) && (
+                <div className="text-center py-12 bg-white rounded-2xl shadow-md border border-gray-100">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+                    <Filter className="w-8 h-8 text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No Products Match Your Filters</h3>
+                  <p className="text-gray-500 max-w-md mx-auto mb-4">
+                    Try adjusting your keyword or category filters to see more results.
+                  </p>
+                  <button
+                    onClick={() => { handleClearKeywordFilters(); handleClearCategoryFilters(); }}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
+              
+              {/* Custom Product Cards - Display filtered eBay results */}
+              {filteredProducts.length > 0 && (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {productsData.map((product, index) => (
+                {filteredProducts.map((product, index) => (
                     <a
-                      key={`product-${index}`}
+                      key={`product-${product.id || index}`}
                       href={product.url || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -1546,6 +1721,7 @@ export default function MoodScoutLanding() {
                     </a>
                 ))}
               </div>
+              )}
             </div>
             )}
 
