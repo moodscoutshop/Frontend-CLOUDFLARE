@@ -61,6 +61,11 @@ export default function MoodScoutLanding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  
+  // Product relevance explanation states
+  const [expandedCards, setExpandedCards] = useState(new Set()); // Set of product URLs/IDs that are expanded
+  const [loadingRelevance, setLoadingRelevance] = useState(new Set()); // Set of product URLs/IDs currently loading
+  const [relevanceExplanations, setRelevanceExplanations] = useState({}); // Map of product URL/ID -> explanation text
 
   // API URL - UPDATED FOR PRODUCTION
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -390,6 +395,10 @@ export default function MoodScoutLanding() {
     setEnrichmentProgress({ current: 0, total: 0 });
     setShowSearchResults(true);
     setEbayWidgetData(null); // Reset eBay widget data
+    // Reset product relevance states
+    setExpandedCards(new Set());
+    setLoadingRelevance(new Set());
+    setRelevanceExplanations({});
     
     // Initialize progress bar
     setProgressData({ phase: 'pinterest', progress: 0, subStep: '', current: 0, total: 0 });
@@ -678,6 +687,78 @@ export default function MoodScoutLanding() {
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Handle "Why is this relevant?" button click
+  const handleRelevanceClick = async (e, product, productIndex) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const productId = product.url || product.id || `product-${productIndex}`;
+    
+    // If already expanded, collapse it
+    if (expandedCards.has(productId)) {
+      setExpandedCards(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
+      return;
+    }
+    
+    // If already loaded, just expand
+    if (relevanceExplanations[productId]) {
+      setExpandedCards(prev => new Set(prev).add(productId));
+      return;
+    }
+    
+    // Start loading
+    setLoadingRelevance(prev => new Set(prev).add(productId));
+    
+    try {
+      // Extract keywords from analysis data or search query
+      const keywords = analysisData?.contents || [];
+      
+      const response = await fetch(`${API_URL}/api/product/relevance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          searchQuery: searchQuery,
+          keywords: keywords,
+          product: {
+            name: product.name,
+            description: product.description || '',
+            price: product.price,
+            condition: product.condition
+          }
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.explanation) {
+        // Store explanation and expand card
+        setRelevanceExplanations(prev => ({
+          ...prev,
+          [productId]: data.explanation
+        }));
+        setExpandedCards(prev => new Set(prev).add(productId));
+      } else {
+        console.error('Failed to get relevance explanation:', data.message);
+        alert('Failed to generate explanation. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error fetching relevance explanation:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setLoadingRelevance(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
     }
   };
 
@@ -1470,53 +1551,70 @@ export default function MoodScoutLanding() {
               
               {/* Custom Product Cards - Display eBay results */}
               <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {productsData.map((product, index) => (
-                    <a
+                {productsData.map((product, index) => {
+                  const productId = product.url || product.id || `product-${index}`;
+                  const isExpanded = expandedCards.has(productId);
+                  const isLoading = loadingRelevance.has(productId);
+                  const explanation = relevanceExplanations[productId];
+                  
+                  return (
+                    <div
                       key={`product-${index}`}
-                      href={product.url || '#'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-200 block"
+                      className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-200 flex flex-col"
                     >
                       {/* Product Image with Description Hover */}
-                      <div className="aspect-square relative overflow-hidden bg-gray-100">
-                        <img 
-                          src={product.image || NO_IMAGE_PLACEHOLDER}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = NO_IMAGE_PLACEHOLDER;
-                          }}
-                        />
-                        {product.match_score != null && (
-                          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm z-10">
-                            <TrendingUp className="w-3 h-3 text-purple-600" />
-                            <span className="text-sm font-semibold text-purple-600">{product.match_score.toFixed(1)}%</span>
-                          </div>
-                        )}
-                        {/* Condition badge for eBay products */}
-                        {product.condition && (
-                          <div className="absolute top-3 left-3 bg-green-500/90 text-white text-xs px-2 py-1 rounded-full z-10">
-                            {product.condition}
-                          </div>
-                        )}
-                        {/* Hover Popover for Description */}
-                        {product.description && (
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none">
-                            <div className="p-4 text-white w-full">
-                              <p className="text-sm leading-relaxed line-clamp-4">{product.description}</p>
+                      <a
+                        href={product.url || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <div className="aspect-square relative overflow-hidden bg-gray-100">
+                          <img 
+                            src={product.image || NO_IMAGE_PLACEHOLDER}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = NO_IMAGE_PLACEHOLDER;
+                            }}
+                          />
+                          {product.match_score != null && (
+                            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm z-10">
+                              <TrendingUp className="w-3 h-3 text-purple-600" />
+                              <span className="text-sm font-semibold text-purple-600">{product.match_score.toFixed(1)}%</span>
                             </div>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                          {/* Condition badge for eBay products */}
+                          {product.condition && (
+                            <div className="absolute top-3 left-3 bg-green-500/90 text-white text-xs px-2 py-1 rounded-full z-10">
+                              {product.condition}
+                            </div>
+                          )}
+                          {/* Hover Popover for Description */}
+                          {product.description && (
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none">
+                              <div className="p-4 text-white w-full">
+                                <p className="text-sm leading-relaxed line-clamp-4">{product.description}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </a>
                       
                       {/* Product Info */}
-                      <div className="p-4">
+                      <div className="p-4 flex-1 flex flex-col">
                         {/* Product Name */}
-                        <h4 className="font-semibold text-gray-800 line-clamp-2 group-hover:text-purple-600 transition-colors mb-1">
-                          {product.name || 'Untitled Product'}
-                        </h4>
+                        <a
+                          href={product.url || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <h4 className="font-semibold text-gray-800 line-clamp-2 group-hover:text-purple-600 transition-colors mb-1">
+                            {product.name || 'Untitled Product'}
+                          </h4>
+                        </a>
                         
                         {product.price && (
                           <p className="text-lg font-bold text-green-600 mb-2">{product.price}</p>
@@ -1538,13 +1636,50 @@ export default function MoodScoutLanding() {
                         )}
                         
                         {/* External link indicator */}
-                        <div className="flex items-center gap-1 mt-3 text-blue-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                        <a
+                          href={product.url || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 mt-3 text-blue-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
                           <ExternalLink className="w-4 h-4" />
                           <span>View on eBay</span>
-                        </div>
+                        </a>
+                        
+                        {/* Why is this relevant? Button */}
+                        <button
+                          onClick={(e) => handleRelevanceClick(e, product, index)}
+                          disabled={isLoading}
+                          className="mt-4 w-full py-2 px-4 bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 text-purple-700 font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Generating...</span>
+                            </>
+                          ) : isExpanded ? (
+                            <span>Hide explanation</span>
+                          ) : (
+                            <span>Why is this relevant?</span>
+                          )}
+                        </button>
+                        
+                        {/* Expanded Explanation Section */}
+                        {isExpanded && explanation && (
+                          <div className="mt-4 pt-4 border-t border-gray-200 animate-fadeIn">
+                            <div className="flex items-start gap-2">
+                              <Sparkles className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
+                              <div className="flex-1">
+                                <h5 className="text-sm font-semibold text-gray-800 mb-2">AI Explanation</h5>
+                                <p className="text-sm text-gray-600 leading-relaxed">{explanation}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </a>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
             )}
