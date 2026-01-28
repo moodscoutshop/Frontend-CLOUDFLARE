@@ -73,9 +73,16 @@ export default function MoodScoutLanding() {
   const [loadingRelevance, setLoadingRelevance] = useState(new Set()); // Set of product URLs/IDs currently loading
   const [relevanceExplanations, setRelevanceExplanations] = useState({}); // Map of product URL/ID -> explanation text
 
+  // Refs for scrolling to sections
+  const resultsRef = useRef(null);
+  const pinterestSectionRef = useRef(null);
+  const analysisSectionRef = useRef(null);
+  const productsSectionRef = useRef(null);
+
   // API URL - UPDATED FOR PRODUCTION
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+<<<<<<< Updated upstream
   const ebayCategories = [
     "Art & Collectibles",
     "Bags & Purses",
@@ -91,6 +98,18 @@ export default function MoodScoutLanding() {
     "Shoes",
     "Toys & Games",
     "Weddings",
+=======
+  const marketplaceOptions = [
+    "Etsy",
+    "Temu",
+    "Shein",
+    "Amazon",
+    "Target",
+    "eBay",
+    "Shopify Stores",
+    "AliExpress",
+    "Walmart",
+>>>>>>> Stashed changes
     "Other"
   ];
 
@@ -245,6 +264,51 @@ export default function MoodScoutLanding() {
     if (segmentIndex === currentIndex) return 'active';
     return 'pending';
   };
+
+  // Reusable scroll function with navbar offset
+  const scrollToSection = useCallback((ref) => {
+    if (!ref?.current) return;
+    
+    // Get navbar height (fixed navbar is approximately 72px, but we calculate dynamically)
+    const navbarHeight = 80; // Fixed navbar height + some padding
+    const elementPosition = ref.current.getBoundingClientRect().top + window.pageYOffset;
+    const offsetPosition = elementPosition - navbarHeight;
+    
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: 'smooth'
+    });
+  }, []);
+
+  // Handle clicking on progress bar segment to navigate to respective section
+  const handleSegmentClick = useCallback((segmentId) => {
+    // Only allow navigation when progress is complete
+    if (progressData.phase !== 'complete') return;
+    
+    let targetRef = null;
+    
+    // For keyword search, clicking the single segment goes to products
+    if (searchType === 'keyword') {
+      targetRef = productsSectionRef;
+    } else {
+      // For Pinterest search, map segment ID to corresponding ref
+      switch (segmentId) {
+        case 'pinterest':
+          targetRef = pinterestSectionRef;
+          break;
+        case 'analysis':
+          targetRef = analysisSectionRef;
+          break;
+        case 'search':
+          targetRef = productsSectionRef;
+          break;
+        default:
+          targetRef = resultsRef;
+      }
+    }
+    
+    scrollToSection(targetRef);
+  }, [progressData.phase, searchType, scrollToSection]);
 
   // Motivational messages (friendly & engaging) - fallback
   const motivationalMessages = [
@@ -456,8 +520,34 @@ export default function MoodScoutLanding() {
     setLoadingRelevance(new Set());
     setRelevanceExplanations({});
     
+<<<<<<< Updated upstream
     // Initialize progress bar
     setProgressData({ phase: 'pinterest', progress: 0, subStep: '', current: 0, total: 0 });
+=======
+    // Auto-scroll to results section after a brief delay
+    setTimeout(() => {
+      scrollToSection(resultsRef);
+    }, 100);
+    
+    // Initialize progress bar based on search type
+    if (isPinterest) {
+      // Pinterest flow: 3 segments
+      setProgressData({ phase: 'pinterest', progress: 0, subStep: '', current: 0, total: 0 });
+      setEstimatedTime(40); // Total estimated time in seconds (10+15+15)
+      setSegmentTimes({
+        pinterest: { startTime: Date.now(), endTime: null, elapsed: 0 },
+        analysis: { startTime: null, endTime: null, elapsed: 0 },
+        search: { startTime: null, endTime: null, elapsed: 0 }
+      });
+    } else {
+      // Keyword search: 1 segment (search only)
+      setProgressData({ phase: 'search', progress: 0, subStep: '', current: 0, total: 0 });
+      setEstimatedTime(15); // Just search time
+      setSegmentTimes({
+        search: { startTime: Date.now(), endTime: null, elapsed: 0 }
+      });
+    }
+>>>>>>> Stashed changes
     setSearchStartTime(Date.now());
     setElapsedTime(0);
     setEstimatedTime(68); // Total estimated time in seconds (~15+13+40)
@@ -1256,14 +1346,109 @@ export default function MoodScoutLanding() {
               <form onSubmit={handleSearch} className="relative">
               {/* className="relative opacity-60 pointer-events-none"> */}
                 <div className="relative group">
+<<<<<<< Updated upstream
                   <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" />
+=======
+                  {/* Marketplace Selector Dropdown - Left Side (HIDDEN FOR NOW - will be unhidden in future) */}
+                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-30 marketplace-dropdown hidden">
+                    <button
+                      type="button"
+                      onClick={() => setShowMarketplaceDropdown(!showMarketplaceDropdown)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <img 
+                        src={marketplaces.find(m => m.id === selectedMarketplace)?.logo} 
+                        alt={marketplaces.find(m => m.id === selectedMarketplace)?.name}
+                        className="w-6 h-6 object-contain"
+                      />
+                      <span className="text-sm font-semibold text-gray-700">{marketplaces.find(m => m.id === selectedMarketplace)?.name}</span>
+                      <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${showMarketplaceDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {showMarketplaceDropdown && (
+                      <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[9999] overflow-hidden">
+                        <div className="p-2">
+                          {marketplaces.map((marketplace) => (
+                            <button
+                              key={marketplace.id}
+                              type="button"
+                              onClick={() => {
+                                if (marketplace.available) {
+                                  setSelectedMarketplace(marketplace.id);
+                                  setShowMarketplaceDropdown(false);
+                                }
+                              }}
+                              disabled={!marketplace.available}
+                              className={`
+                                w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                                ${
+                                  marketplace.available
+                                    ? selectedMarketplace === marketplace.id
+                                      ? `bg-gradient-to-r ${marketplace.color} text-white shadow-md`
+                                      : 'hover:bg-gray-50 text-gray-700'
+                                    : 'opacity-50 cursor-not-allowed'
+                                }
+                              `}
+                            >
+                              <img 
+                                src={marketplace.logo} 
+                                alt={marketplace.name}
+                                className="w-8 h-8 object-contain flex-shrink-0"
+                              />
+                              <div className="flex-1 text-left">
+                                <div className="font-semibold flex items-center gap-2">
+                                  {marketplace.name}
+                                  {!marketplace.available && (
+                                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Soon</span>
+                                  )}
+                                </div>
+                                <div className={`text-xs ${
+                                  selectedMarketplace === marketplace.id && marketplace.available
+                                    ? 'text-white/80'
+                                    : 'text-gray-500'
+                                }`}>
+                                  {marketplace.description}
+                                </div>
+                              </div>
+                              {selectedMarketplace === marketplace.id && marketplace.available && (
+                                <CheckCircle className="w-5 h-5" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Search Icon (decorative) - Hidden when there's content, Clear Icon shown instead */}
+                  {searchQuery ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-5 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors z-10"
+                      aria-label="Clear search"
+                    >
+                      <X className="w-4 h-4 text-gray-600" />
+                    </button>
+                  ) : (
+                    <Search className="absolute right-5 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" />
+                  )}
+                  
+                  {/* Search Input */}
+>>>>>>> Stashed changes
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+<<<<<<< Updated upstream
                     placeholder="Search eBay products"
                     // disabled
                     className="w-full pl-14 pr-14 py-5 text-lg border-2 border-gray-200 rounded-full outline-none transition-all shadow-lg bg-gray-50"
+=======
+                    placeholder="https://www.pinterest.com/username/board-name/"
+                    className="w-full pl-6 pr-14 py-5 text-lg border-2 border-gray-200 rounded-full outline-none transition-all shadow-lg bg-gray-50 focus:border-purple-300 focus:shadow-xl"
+>>>>>>> Stashed changes
                   />
                   {/* className="w-full pl-14 pr-14 py-5 text-lg border-2 border-gray-200 rounded-full outline-none transition-all shadow-lg bg-gray-50 cursor-not-allowed"/> */}
                 </div>
@@ -1289,8 +1474,41 @@ export default function MoodScoutLanding() {
               {/* Info message */}
               <p className="text-sm text-gray-500 mt-4 flex items-center justify-center gap-2">
                 <Sparkles className="w-4 h-4" />
+<<<<<<< Updated upstream
                 Launching in 2026. Join the waitlist to be notified!
               </p>
+=======
+                Paste your Pinterest board URL to find products that match your board's aesthetic.
+              </p>
+
+              {/* Marketplace Options Info */}
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                {/* eBay - Active */}
+                <div className="flex items-center gap-3 bg-white border-2 border-blue-200 rounded-full px-5 py-2.5 shadow-sm">
+                  <img 
+                    src={ebayLogo} 
+                    alt="eBay"
+                    className="w-6 h-6 object-contain"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Searching eBay</span>
+                  <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-3.5 h-3.5 text-white" />
+                  </div>
+                </div>
+                
+                {/* More Marketplaces - Coming Soon */}
+                <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-full px-5 py-2.5">
+                  <div className="flex -space-x-2">
+                    <img src={amazonLogo} alt="Amazon" className="w-5 h-5 object-contain opacity-50" />
+                    <img src={targetLogo} alt="Target" className="w-5 h-5 object-contain opacity-50" />
+                    <img src={walmartLogo} alt="Walmart" className="w-5 h-5 object-contain opacity-50" />
+                  </div>
+                  <span className="text-sm text-gray-500">More marketplaces coming soon</span>
+                  <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+                </div>
+              </div>
+
+>>>>>>> Stashed changes
             </div>
           </div>
         </div>
@@ -1298,7 +1516,7 @@ export default function MoodScoutLanding() {
 
       {/* Search Results Section - Progressive Loading with SSE */}
       {showSearchResults && (
-        <section className="py-12 px-6 bg-gradient-to-b from-purple-50 to-white">
+        <section ref={resultsRef} className="py-12 px-6 bg-gradient-to-b from-purple-50 to-white">
           <div className="max-w-7xl mx-auto">
             
             {/* Interactive Segmented Progress Tracker */}
@@ -1333,10 +1551,15 @@ export default function MoodScoutLanding() {
                       const isComplete = status === 'completed' || progressData.phase === 'complete';
                       const isActive = status === 'active' && progressData.phase !== 'complete';
                       const isPending = status === 'pending';
+                      const isClickable = progressData.phase === 'complete';
                       
                       return (
                         <div
                           key={segment.id}
+                          onClick={() => isClickable && handleSegmentClick(segment.id)}
+                          role={isClickable ? 'button' : undefined}
+                          tabIndex={isClickable ? 0 : undefined}
+                          onKeyDown={(e) => isClickable && e.key === 'Enter' && handleSegmentClick(segment.id)}
                           className={`relative flex flex-col items-center justify-center transition-all duration-500 ${
                             index < segments.length - 1 ? 'border-r-2 border-white/50' : ''
                           } ${
@@ -1345,8 +1568,14 @@ export default function MoodScoutLanding() {
                               : isActive 
                                 ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 bg-[length:200%_100%] animate-gradient-x text-white' 
                                 : 'bg-gray-200 text-gray-400'
+<<<<<<< Updated upstream
                           }`}
                           style={{ width: `${segment.widthPercent}%` }}
+=======
+                          } ${isClickable ? 'cursor-pointer hover:brightness-110 hover:scale-[1.02] active:scale-100' : ''}`}
+                          style={{ width: `${segmentWidth}%` }}
+                          title={isClickable ? `Click to navigate to ${segment.name}` : undefined}
+>>>>>>> Stashed changes
                         >
                           {/* Pulsing overlay for active segment */}
                           {isActive && (
@@ -1435,7 +1664,7 @@ export default function MoodScoutLanding() {
 
             {/* Row 1: Pinterest Board Images Gallery - Shows immediately when available */}
             {pinterestImages && pinterestImages.length > 0 && (
-            <div className="mb-12 animate-fadeIn">
+            <div ref={pinterestSectionRef} className="mb-12 animate-fadeIn">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
                   <Heart className="w-5 h-5 text-white" />
@@ -1484,7 +1713,7 @@ export default function MoodScoutLanding() {
 
             {/* Row 2: Unified AI Analysis & Keywords - Shows when analysis is complete */}
             {analysisData && (
-            <div className="mb-12 animate-fadeIn">
+            <div ref={analysisSectionRef} className="mb-12 animate-fadeIn">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
@@ -1568,9 +1797,28 @@ export default function MoodScoutLanding() {
                   <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-600 rounded font-bold">Cat</span>
                   <span className="text-xs font-medium text-gray-600">Category Match</span>
                 </div>
+<<<<<<< Updated upstream
                 <div className="flex items-center gap-2">
                   <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-600 rounded font-bold">T</span>
                   <span className="text-xs font-medium text-gray-600">Theme Match</span>
+=======
+
+                {/* Collapse Button */}
+                <div className="mt-6 text-center">
+                  <button 
+                    onClick={() => {
+                      setIsScoringExpanded(false);
+                      // Scroll to matched products section after collapsing
+                      setTimeout(() => {
+                        scrollToSection(productsSectionRef);
+                      }, 100);
+                    }}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-white border border-purple-200 rounded-full text-purple-600 font-medium hover:bg-purple-50 transition-colors shadow-sm"
+                  >
+                    <ChevronDown className="w-4 h-4 rotate-180" />
+                    Hide Scoring Details
+                  </button>
+>>>>>>> Stashed changes
                 </div>
               </div>
             )}
@@ -1598,7 +1846,7 @@ export default function MoodScoutLanding() {
 
             {/* Row 3: Matched Products - Shows when products are available */}
             {productsData && productsData.length > 0 && (
-            <div className="animate-fadeIn">
+            <div ref={productsSectionRef} className="animate-fadeIn">
               {/* Header with Category Dropdown */}
               <div className="flex flex-wrap items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
