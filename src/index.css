@@ -2,7 +2,154 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom animations */
+/* ============================================
+   INDUSTRIAL TECH-SLEEK THEME
+   ============================================ */
+
+:root {
+  /* Background colors */
+  --color-bg-primary: #FDFDF8;
+  --color-bg-section: #EEEFE9;
+  --color-bg-navbar: #E0DCCE;
+  
+  /* Primary accent colors */
+  --color-amber: #EB9D2A;
+  --color-amber-dark: #B17816;
+  --color-green: #36C46F;
+  --color-blue: #2F80FA;
+  --color-purple: #B62AD9;
+  
+  /* Button colors */
+  --color-btn-primary: #EB9D2A;
+  --color-btn-primary-shadow: #CD8407;
+  --color-btn-primary-border: #B17816;
+  --color-btn-secondary: #FFFFFF;
+  --color-btn-secondary-shadow: #EB9D2A;
+  --color-btn-secondary-border: #B17816;
+  
+  /* Text colors */
+  --color-ink: #1D1F20;
+  --color-ink-light: #3D3F40;
+  --color-ink-muted: #5D5F60;
+  
+  /* Border colors */
+  --color-border-light: #E0DCCE;
+  --color-border-medium: #D4CFC0;
+}
+
+/* Base body styling */
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-ink);
+}
+
+/* ============================================
+   SWIRL GRADIENT BACKGROUND (Mesh-style)
+   ============================================ */
+.swirl-gradient {
+  background: 
+    radial-gradient(
+      circle at center,
+      #E4CCFB 0%,
+      #E4CCFB 15%,
+      #D9E8FC 30%,
+      #F5ECEB 50%,
+      #F8EDDD 70%,
+      #F8EDDD 100%
+    );
+}
+
+/* Frosted glass effect */
+.glass {
+  background: rgba(224, 220, 206, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-light {
+  background: rgba(253, 253, 248, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ============================================
+   BUTTON COMPONENTS
+   ============================================ */
+
+/* Primary Button - Amber/Orange - Thin */
+.btn-primary {
+  @apply px-4 py-1.5 font-medium rounded text-sm;
+  background-color: var(--color-btn-primary);
+  border: 1px solid var(--color-btn-primary-border);
+  box-shadow: 0 2px 0 0 var(--color-btn-primary-shadow);
+  color: var(--color-ink);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0 0 var(--color-btn-primary-shadow);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 0 0 var(--color-btn-primary-shadow);
+}
+
+/* Secondary Button - White with amber accent - Thin */
+.btn-secondary {
+  @apply px-4 py-1.5 font-medium rounded text-sm;
+  background-color: var(--color-btn-secondary);
+  border: 1px solid var(--color-btn-secondary-border);
+  box-shadow: 0 2px 0 0 var(--color-btn-secondary-shadow);
+  color: var(--color-ink);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0 0 var(--color-btn-secondary-shadow);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 0 0 var(--color-btn-secondary-shadow);
+}
+
+/* ============================================
+   CARD COMPONENTS
+   ============================================ */
+
+.card {
+  @apply rounded-lg;
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border-light);
+}
+
+.card-section {
+  @apply rounded-lg;
+  background-color: var(--color-bg-section);
+  border: 1px solid var(--color-border-light);
+}
+
+/* ============================================
+   TAG COMPONENTS
+   ============================================ */
+
+.tag {
+  @apply px-3 py-1 text-sm font-medium rounded-full;
+  background-color: var(--color-bg-section);
+  border: 1px solid var(--color-border-medium);
+  color: var(--color-ink-light);
+}
+
+.tag-active {
+  @apply px-3 py-1 text-sm font-medium rounded-full text-white;
+  background-color: var(--color-btn-primary);
+  border: 1px solid var(--color-btn-primary-border);
+}
+
+/* ============================================
+   CUSTOM ANIMATIONS
+   ============================================ */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -75,4 +222,80 @@
 
 .animate-fade-out {
   animation: fade-out 5s ease-out forwards;
+}
+
+/* Tab content fade in animation */
+@keyframes tab-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-tab-fade-in {
+  animation: tab-fade-in 0.3s ease-out forwards;
+}
+
+/* Hide scrollbar for tab navigation on mobile */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tooltip fade animation */
+@keyframes tooltip-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.animate-tooltip-fade {
+  animation: tooltip-fade 2s ease-in-out forwards;
+}
+
+/* Slide up animation for results */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out forwards;
+}
+
+/* Shimmer animation for progress bar loading segments */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }

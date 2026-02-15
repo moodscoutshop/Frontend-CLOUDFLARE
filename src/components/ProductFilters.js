@@ -29,8 +29,8 @@ export function KeywordFilterBadges({
               inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full 
               transition-all duration-200 cursor-pointer
               ${isSelected 
-                ? 'bg-purple-600 text-white border-2 border-dashed border-purple-300 shadow-md' 
-                : 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border-2 border-transparent hover:border-purple-300'
+                ? 'bg-[#EB9D2A] text-[#1D1F20] border-2 border-dashed border-[#CD8407] shadow-md' 
+                : 'bg-[#EB9D2A]/15 text-[#B17816] border-2 border-transparent hover:border-[#EB9D2A]'
               }
             `}
           >
@@ -49,8 +49,8 @@ export function KeywordFilterBadges({
         <button
           onClick={onClearAll}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full 
-            bg-gray-100 text-gray-600 border-2 border-transparent 
-            hover:bg-gray-200 hover:border-gray-300 transition-all duration-200"
+            bg-[#EEEFE9] text-[#5D5F60] border-2 border-transparent 
+            hover:bg-[#E0DCCE] hover:border-[#D4CFC0] transition-all duration-200"
         >
           <X className="w-3 h-3" />
           Clear
@@ -66,37 +66,49 @@ export function KeywordFilterBadges({
 
 /**
  * Build a hierarchical tree from category paths
+ * Categories are flat strings, so we count products per unique category
  * @param {Array} products - Array of products with categories
- * @returns {Object} Tree structure of categories
+ * @returns {Object} Tree structure of categories with accurate counts
  */
 export function buildCategoryTree(products) {
   const tree = {};
   
-  products.forEach(product => {
+  // First, build the tree structure with product sets for accurate counting
+  const categoryProductMap = new Map(); // Maps category name -> Set of product IDs
+  
+  products.forEach((product, productIndex) => {
     const categories = product.categories || [];
-    // Each product may have multiple category paths
+    const productId = product.id || `product-${productIndex}`;
+    
     categories.forEach(categoryPath => {
-      if (typeof categoryPath === 'string') {
-        // Split by common separators: " > ", " / ", " | "
-        const parts = categoryPath.split(/\s*[>\/|]\s*/).filter(Boolean);
-        let currentLevel = tree;
+      if (typeof categoryPath === 'string' && categoryPath.trim()) {
+        const trimmedCategory = categoryPath.trim();
         
-        parts.forEach((part, index) => {
-          const trimmedPart = part.trim();
-          if (!currentLevel[trimmedPart]) {
-            currentLevel[trimmedPart] = {
-              name: trimmedPart,
-              fullPath: parts.slice(0, index + 1).join(' > '),
-              children: {},
-              count: 0
-            };
-          }
-          currentLevel[trimmedPart].count++;
-          currentLevel = currentLevel[trimmedPart].children;
-        });
+        // Track which products belong to each category
+        if (!categoryProductMap.has(trimmedCategory)) {
+          categoryProductMap.set(trimmedCategory, new Set());
+        }
+        categoryProductMap.get(trimmedCategory).add(productId);
+        
+        // Build tree structure (treat each category as a flat item, no hierarchy splitting)
+        if (!tree[trimmedCategory]) {
+          tree[trimmedCategory] = {
+            name: trimmedCategory,
+            fullPath: trimmedCategory,
+            children: {},
+            count: 0
+          };
+        }
       }
     });
   });
+  
+  // Now set counts based on unique products per category
+  for (const [categoryName, productIds] of categoryProductMap) {
+    if (tree[categoryName]) {
+      tree[categoryName].count = productIds.size;
+    }
+  }
   
   return tree;
 }
@@ -147,7 +159,7 @@ function CategoryTreeItem({
       <div 
         className={`
           flex items-center gap-2 px-3 py-2 cursor-pointer rounded-lg transition-all duration-200
-          ${isSelected ? 'bg-purple-100 text-purple-700' : 'hover:bg-gray-50'}
+          ${isSelected ? 'bg-[#EB9D2A]/15 text-[#B17816]' : 'hover:bg-[#EEEFE9]'}
           ${level > 0 ? 'ml-4' : ''}
         `}
         style={{ paddingLeft: `${12 + level * 16}px` }}
@@ -159,12 +171,12 @@ function CategoryTreeItem({
               e.stopPropagation();
               onToggleExpand(node.fullPath);
             }}
-            className="p-0.5 hover:bg-gray-200 rounded transition-colors"
+            className="p-0.5 hover:bg-[#E0DCCE] rounded transition-colors"
           >
             {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <ChevronDown className="w-4 h-4 text-[#5D5F60]" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-gray-500" />
+              <ChevronRight className="w-4 h-4 text-[#5D5F60]" />
             )}
           </button>
         ) : (
@@ -177,8 +189,8 @@ function CategoryTreeItem({
           className={`
             w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
             ${isSelected 
-              ? 'bg-purple-600 border-purple-600' 
-              : 'border-gray-300 hover:border-purple-400'
+              ? 'bg-[#EB9D2A] border-[#EB9D2A]' 
+              : 'border-[#D4CFC0] hover:border-[#EB9D2A]'
             }
           `}
         >
@@ -188,18 +200,18 @@ function CategoryTreeItem({
         {/* Category name and count */}
         <span 
           onClick={() => onCategoryToggle(node.fullPath)}
-          className={`flex-1 text-sm ${isSelected ? 'font-medium' : ''}`}
+          className={`flex-1 text-sm break-words min-w-0 ${isSelected ? 'font-medium' : ''}`}
         >
           {node.name}
         </span>
-        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+        <span className="text-xs text-[#5D5F60] bg-[#EEEFE9] px-2 py-0.5 rounded-full flex-shrink-0">
           {node.count}
         </span>
       </div>
       
       {/* Children */}
       {hasChildren && isExpanded && (
-        <div className="border-l-2 border-gray-100 ml-6">
+        <div className="border-l-2 border-[#EEEFE9] ml-6">
           {Object.values(node.children).map((child, idx) => (
             <CategoryTreeItem
               key={`${child.fullPath}-${idx}`}
@@ -218,6 +230,76 @@ function CategoryTreeItem({
 }
 
 /**
+ * useDropdownPosition - Hook to dynamically calculate dropdown position
+ * Returns { alignment: 'left' | 'center' | 'right', direction: 'down' | 'up' }
+ *
+ * The hook measures the trigger button and viewport on open / resize / scroll
+ * and picks the alignment that keeps the dropdown fully on-screen.
+ */
+function useDropdownPosition(isOpen, triggerRef, dropdownRef) {
+  const [position, setPosition] = useState({ alignment: 'left', direction: 'down' });
+  
+  useEffect(() => {
+    if (!isOpen || !triggerRef.current) return;
+    
+    const updatePosition = () => {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      // Measure the actual dropdown panel width if it exists, else estimate
+      const dropdownEl = dropdownRef?.current;
+      const dropdownWidth = dropdownEl ? dropdownEl.scrollWidth : 320;
+      const dropdownHeight = 384; // max-h-96
+      
+      // --- Horizontal alignment ---
+      const spaceOnRight = viewportWidth - rect.left;    // space from trigger left edge
+      const spaceOnLeft  = rect.right;                   // space from trigger right edge
+      const triggerCenter = rect.left + rect.width / 2;
+      const halfDd = dropdownWidth / 2;
+
+      let alignment;
+      if (spaceOnRight >= dropdownWidth) {
+        // Enough room to open left-aligned (dropdown extends right)
+        alignment = 'left';
+      } else if (spaceOnLeft >= dropdownWidth) {
+        // Enough room to open right-aligned (dropdown extends left)
+        alignment = 'right';
+      } else if (triggerCenter - halfDd >= 8 && triggerCenter + halfDd <= viewportWidth - 8) {
+        // Center-aligned fits
+        alignment = 'center';
+      } else {
+        // Fallback: pick whichever side has more room
+        alignment = spaceOnRight >= spaceOnLeft ? 'left' : 'right';
+      }
+      
+      // --- Vertical direction ---
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const direction = spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove ? 'down' : 'up';
+      
+      setPosition({ alignment, direction });
+    };
+    
+    // Run once immediately, then again on next frame so the dropdown element
+    // has rendered and we can measure its real width.
+    updatePosition();
+    const raf = requestAnimationFrame(updatePosition);
+
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen, triggerRef, dropdownRef]);
+  
+  return position;
+}
+
+/**
  * CategoryDropdown - Main category filter dropdown component
  */
 export function CategoryDropdown({ 
@@ -228,7 +310,10 @@ export function CategoryDropdown({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState([]);
-  const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+  const panelRef = useRef(null);
+  const dropdownRef = useRef(null); // wrapper
+  const position = useDropdownPosition(isOpen, triggerRef, panelRef);
   
   // Build category tree from products
   const categoryTree = useMemo(() => buildCategoryTree(products), [products]);
@@ -242,9 +327,11 @@ export function CategoryDropdown({
       }
     }
     
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
   
   const handleToggleExpand = (path) => {
     setExpandedNodes(prev => 
@@ -273,16 +360,29 @@ export function CategoryDropdown({
   
   const isDefaultSelected = selectedCategories.length === 0;
   
+  const alignmentClass =
+    position.alignment === 'center' ? 'left-1/2 -translate-x-1/2' :
+    position.alignment === 'right'  ? 'right-0' : 'left-0';
+
+  const dropdownClasses = `
+    absolute min-w-[20rem] max-w-[min(28rem,90vw)] max-h-96
+    overflow-y-auto overflow-x-hidden
+    bg-[#FDFDF8] rounded-lg shadow-xl border border-[#D4CFC0] z-50
+    ${position.direction === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'}
+    ${alignmentClass}
+  `;
+  
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Dropdown trigger button */}
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all duration-200
+          inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200
           ${selectedCategories.length > 0 
-            ? 'bg-purple-50 border-purple-300 text-purple-700' 
-            : 'bg-white border-gray-200 text-gray-700 hover:border-purple-300'
+            ? 'bg-[#EB9D2A]/15 border-[#EB9D2A] text-[#B17816]' 
+            : 'bg-white border-[#D4CFC0] text-[#3D3F40] hover:border-[#EB9D2A]'
           }
         `}
       >
@@ -298,15 +398,15 @@ export function CategoryDropdown({
       
       {/* Dropdown panel */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-xl border border-gray-100 z-50">
+        <div ref={panelRef} className={dropdownClasses}>
           {/* Header */}
-          <div className="sticky top-0 bg-white px-4 py-3 border-b border-gray-100">
+          <div className="sticky top-0 bg-[#FDFDF8] px-4 py-3 border-b border-[#D4CFC0]">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-gray-800">Filter by Category</span>
+              <span className="font-semibold text-[#1D1F20]">Filter by Category</span>
               {selectedCategories.length > 0 && (
                 <button
                   onClick={onClearCategories}
-                  className="text-xs text-purple-600 hover:text-purple-800 font-medium"
+                  className="text-xs text-[#EB9D2A] hover:text-[#CD8407] font-medium"
                 >
                   Clear all
                 </button>
@@ -318,20 +418,20 @@ export function CategoryDropdown({
           <div 
             onClick={() => handleCategorySelect('default')}
             className={`
-              flex items-center gap-2 px-4 py-3 cursor-pointer border-b border-gray-50
-              ${isDefaultSelected ? 'bg-purple-50' : 'hover:bg-gray-50'}
+              flex items-center gap-2 px-4 py-3 cursor-pointer border-b border-[#EEEFE9]
+              ${isDefaultSelected ? 'bg-[#EB9D2A]/10' : 'hover:bg-[#EEEFE9]'}
             `}
           >
             <div className={`
               w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
               ${isDefaultSelected 
-                ? 'bg-purple-600 border-purple-600' 
-                : 'border-gray-300 hover:border-purple-400'
+                ? 'bg-[#EB9D2A] border-[#EB9D2A]' 
+                : 'border-[#D4CFC0] hover:border-[#EB9D2A]'
               }
             `}>
               {isDefaultSelected && <Check className="w-3 h-3 text-white" />}
             </div>
-            <span className={`text-sm ${isDefaultSelected ? 'font-medium text-purple-700' : 'text-gray-600'}`}>
+            <span className={`text-sm ${isDefaultSelected ? 'font-medium text-[#B17816]' : 'text-[#5D5F60]'}`}>
               All Categories (Default)
             </span>
           </div>
@@ -387,17 +487,17 @@ export function filterProducts(products, selectedKeywords = [], selectedCategori
       );
     }
     
-    // Category filter (product must match at least one selected category path)
+    // Category filter (product must have at least one selected category - EXACT match)
     let matchesCategory = true;
     if (selectedCategories.length > 0) {
       const productCategories = product.categories || [];
+      // Use case-insensitive EXACT matching for categories
+      const productCategoriesLower = productCategories.map(cat => 
+        typeof cat === 'string' ? cat.toLowerCase().trim() : ''
+      );
+      
       matchesCategory = selectedCategories.some(selectedCat => 
-        productCategories.some(prodCat => {
-          if (typeof prodCat !== 'string') return false;
-          // Check if product category matches or starts with selected category
-          return prodCat.toLowerCase().includes(selectedCat.toLowerCase()) ||
-                 selectedCat.toLowerCase().includes(prodCat.toLowerCase());
-        })
+        productCategoriesLower.includes(selectedCat.toLowerCase().trim())
       );
     }
     
