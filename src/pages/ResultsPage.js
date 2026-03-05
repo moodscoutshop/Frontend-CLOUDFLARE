@@ -52,6 +52,7 @@ export function ResultsPage() {
     API_URL,
     precisionSearch,
     setPrecisionSearch,
+    pinterestImages,
     // Re-search state
     selectedImages,
     analysisData,
@@ -94,7 +95,7 @@ export function ResultsPage() {
     const raw = (searchParams.get('precision') || '').toLowerCase();
     return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
   })();
-  
+
   // ============================================
   // AUTO TAB NAVIGATION CONFIGURATION
   // ============================================

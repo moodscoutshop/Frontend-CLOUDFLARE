@@ -251,6 +251,66 @@ export function ScoringTab() {
         </div>
       </div>
 
+      {/* Visual Example — Scoring Badge on Product Card */}
+      <div className="mt-8">
+        <div className="bg-white rounded-xl p-5 sm:p-7 border border-[#D4CFC0] shadow-md">
+          <div className="flex items-start gap-3 mb-5">
+            <div className="w-10 h-10 bg-[#2F80FA] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-[#1D1F20] mb-1">Understanding Match Score Badges</h3>
+              <p className="text-sm text-[#5D5F60]">Every product card displays a match score badge showing how well it aligns with your aesthetic.</p>
+            </div>
+          </div>
+
+          {/* Skeleton product card mockup for scoring badge */}
+          <div className="border border-[#E0DCCE] rounded-lg p-4 bg-[#FDFDF8] flex flex-col">
+            <p className="text-xs font-semibold text-[#3D3F40] mb-3 uppercase tracking-wider">Visual Example — Where to find the scoring badge on a product card</p>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="max-w-[220px] w-full">
+                <div className="bg-white rounded-lg shadow border border-[#D4CFC0] overflow-hidden">
+                  {/* Skeleton image area */}
+                  <div className="aspect-square relative bg-[#EEEFE9]">
+                    {/* Animated skeleton shimmer */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#EEEFE9] via-[#E0DCCE] to-[#EEEFE9] animate-pulse" />
+                    {/* Condition badge placeholder (faded) */}
+                    <div className="absolute top-2 left-2 z-10">
+                      <span className="inline-block bg-[#D4CFC0] text-[#5D5F60] text-[10px] font-semibold px-2 py-0.5 rounded opacity-50">
+                        Condition
+                      </span>
+                    </div>
+                    {/* Scoring badge — highlighted */}
+                    <div className="absolute top-2 right-2 z-10">
+                      <span className="relative inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded shadow-md ring-2 ring-[#2F80FA]/40 ring-offset-1 ring-offset-white">
+                        <TrendingUp className="w-2.5 h-2.5 text-[#1D4AFF]" />
+                        <span className="text-[10px] font-semibold text-[#1D4AFF]">87.5%</span>
+                      </span>
+                      {/* Dotted arrow pointing up to scoring badge */}
+                      <div className="mt-1 flex items-start justify-end mr-1">
+                        <div className="flex flex-col items-start">
+                          <svg width="60" height="36" viewBox="0 0 60 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <polygon points="30,0 26,7 34,7" fill="#1D4AFF"/>
+                            <path d="M30 34 Q30 26 30 8" stroke="#1D4AFF" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3 3"/>
+                          </svg>
+                          <span className="text-[9px] font-semibold text-[#1D4AFF] ml-1">Match Score</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Skeleton text area */}
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 bg-[#EEEFE9] rounded w-[85%]" />
+                    <div className="h-3 bg-[#EEEFE9] rounded w-[60%]" />
+                    <div className="h-4 bg-[#EEEFE9] rounded w-[35%] mt-1" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Precision Search Section */}
       <div className="mt-8">
         <div className="bg-gradient-to-br from-[#EB9D2A]/15 via-[#EB9D2A]/10 to-[#CD8407]/10 rounded-xl p-5 sm:p-7 border-2 border-[#EB9D2A]/40 shadow-md">
@@ -338,7 +398,7 @@ export function ScoringTab() {
       <div className="mt-8">
         <div className="bg-white rounded-xl p-5 sm:p-7 border border-[#D4CFC0] shadow-md">
           <div className="flex items-start gap-3 mb-5">
-            <div className="w-10 h-10 bg-[#E60023] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+            <div className="w-10 h-10 bg-[#1D4AFF] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -383,16 +443,18 @@ export function ScoringTab() {
                   <div className="absolute inset-0 bg-gradient-to-r from-[#EEEFE9] via-[#E0DCCE] to-[#EEEFE9] animate-pulse" />
                   {/* Condition badge — highlighted */}
                   <div className="absolute top-2 left-2 z-10">
-                    <span className="relative inline-block bg-[#E60023] text-white text-[10px] font-semibold px-2 py-0.5 rounded shadow-md ring-2 ring-[#E60023]/40 ring-offset-1 ring-offset-white">
+                    <span className="relative inline-block bg-[#FDFDF8] text-[#1D1F20] text-[10px] font-semibold px-2 py-0.5 rounded shadow-md ring-2 ring-[#D4CFC0] ring-offset-1 ring-offset-white">
                       Pre-Owned
                       {/* Attention arrow */}
                     </span>
                     <div className="mt-1 ml-1">
-                      <svg width="60" height="28" viewBox="0 0 60 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M4 4C4 4 8 18 20 22C32 26 56 24 56 24" stroke="#E60023" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3 3"/>
-                        <polygon points="52,20 58,24 52,28" fill="#E60023"/>
-                      </svg>
-                      <span className="text-[9px] font-semibold text-[#E60023] ml-1">Condition Badge</span>
+                      <div className="flex flex-col items-end">
+                        <svg width="60" height="36" viewBox="0 0 60 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <polygon points="30,0 26,7 34,7" fill="#1D1F20"/>
+                          <path d="M30 34 Q30 26 30 5" stroke="#1D1F20" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3 3"/>
+                        </svg>
+                        <span className="text-[9px] font-semibold text-[#1D1F20] mr-1">Condition Badge</span>
+                      </div>
                     </div>
                   </div>
                   {/* Skeleton match score badge */}

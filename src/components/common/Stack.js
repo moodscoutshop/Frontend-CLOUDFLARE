@@ -123,7 +123,7 @@ export default function Stack({
               className="rounded-lg overflow-hidden w-full h-full"
               onClick={() => shouldEnableClick && sendToBack(card.id)}
               animate={{
-                rotateZ: (stack.length - index - 1) * 4 + randomRotate,
+                rotateZ: (stack.length - index - 1) * 8 + randomRotate,
                 scale: 1 + index * 0.06 - stack.length * 0.06,
                 transformOrigin: '90% 90%',
               }}

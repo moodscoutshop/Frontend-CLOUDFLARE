@@ -95,13 +95,13 @@ export function AnalysisTab({ onReSearchFromKeywords }) {
           <div className="p-5 sm:p-6">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Left: Category, Theme, Summary */}
-              <div>
+              <div className="min-w-0">
                 <div className="flex flex-wrap gap-3 mb-4">
                   <span className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full bg-[#B62AD9]/15 text-[#B62AD9]">
-                    {analysisData.category}
+                    Category: {analysisData.category}
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full bg-[#2F80FA]/15 text-[#2F80FA]">
-                    {analysisData.theme}
+                    Theme: {analysisData.theme}
                   </span>
                 </div>
                 <p className="text-[#3D3F40] leading-relaxed">
@@ -110,7 +110,7 @@ export function AnalysisTab({ onReSearchFromKeywords }) {
               </div>
               
               {/* Right: Editable Keywords & Colors */}
-              <div className="bg-[#FDFDF8] rounded-lg p-4 border border-[#E0DCCE]">
+              <div className="bg-[#FDFDF8] rounded-lg p-4 border border-[#E0DCCE] min-w-0 overflow-hidden">
                 <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
                   <h4 className="font-semibold text-[#1D1F20] flex items-center gap-2">
                     <Tag className="w-4 h-4 text-[#36C46F]" />

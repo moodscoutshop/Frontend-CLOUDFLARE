@@ -13,28 +13,52 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SearchProvider } from './context/SearchContext';
 import { PatternProvider } from './context/PatternContext';
-import { LandingPage, ResultsPage } from './pages';
+import { AuthProvider } from './context/AuthContext';
+import { AppLayout } from './components/layout';
+import { LandingPage, ResultsPage, LoginPage, SignupPage, AdminLoginPage, AdminDashboard, CreatorDashboard } from './pages';
 
 /**
  * App Component - Root component with router configuration
+ * 
+ * AuthProvider wraps everything for global auth state.
+ * Existing routes (/, /results) remain UNCHANGED.
+ * New routes: /login, /signup, /app, /dev, /dev/dashboard
  */
 export default function App() {
   return (
     <Router>
-      <SearchProvider>
-        <PatternProvider>
-          <Routes>
-            {/* Landing Page - Home with search */}
-            <Route path="/" element={<LandingPage />} />
-            
-            {/* Results Page - Tabbed results view */}
-            <Route path="/results" element={<ResultsPage />} />
-            
-            {/* Fallback to landing page for unknown routes */}
-            <Route path="*" element={<LandingPage />} />
-          </Routes>
-        </PatternProvider>
-      </SearchProvider>
+      <AuthProvider>
+        <SearchProvider>
+          <PatternProvider>
+            <Routes>
+              {/* ─── Existing routes (UNCHANGED) ─── */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/results" element={
+                <AppLayout><ResultsPage /></AppLayout>
+              } />
+
+              {/* ─── Auth routes ─── */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+
+              {/* ─── Authenticated app route (shows sidebar if logged in) ─── */}
+              <Route path="/app" element={
+                <AppLayout><LandingPage /></AppLayout>
+              } />
+
+              {/* ─── Admin routes (separate auth system) ─── */}
+              <Route path="/dev" element={<AdminLoginPage />} />
+              <Route path="/dev/dashboard" element={<AdminDashboard />} />
+
+              {/* ─── Creator dashboard (requires creator role) ─── */}
+              <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+
+              {/* Fallback to landing page for unknown routes */}
+              <Route path="*" element={<LandingPage />} />
+            </Routes>
+          </PatternProvider>
+        </SearchProvider>
+      </AuthProvider>
     </Router>
   );
 }

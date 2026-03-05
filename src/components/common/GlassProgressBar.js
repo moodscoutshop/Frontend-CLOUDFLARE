@@ -9,6 +9,9 @@ import { useSearch } from '../../context/SearchContext';
  * Persists throughout the search and after completion (never auto-dismisses).
  */
 
+// Developer toggle: set to false to disable the shimmer glimmer effect on active segments
+const ENABLE_SHIMMER = false;
+
 // Segment configuration
 const SEGMENTS = [
   { id: 'pinterest', label: 'Scraping', shortLabel: 'Scrape', Icon: Image, number: 1, estimatedSeconds: 15 },
@@ -90,12 +93,12 @@ export function GlassProgressBar() {
               let textClass = '';
               
               if (segDone) {
-                // Completed segment - green
-                bgClass = 'bg-gradient-to-r from-green-400 to-green-500';
+                // Completed segment - darker green
+                bgClass = 'bg-gradient-to-r from-[#1B8A4A] to-[#22A55B]';
                 textClass = 'text-white';
               } else if (segActive) {
-                // Active segment - orange gradient
-                bgClass = 'bg-gradient-to-r from-[#EB9D2A] to-[#F5C563]';
+                // Active segment - soft purple/pink moving gradient
+                bgClass = 'animate-gradient-move';
                 textClass = 'text-white';
               } else {
                 // Pending segment - no color (transparent to show base)
@@ -130,7 +133,7 @@ export function GlassProgressBar() {
                       </span>
                     
                     {/* Timer — inline after name */}
-                    <span className="text-[9px] sm:text-[10px] font-medium opacity-80">
+                    <span className="text-[10px] sm:text-xs font-medium opacity-80">
                       {segDone && completedSecs != null ? (
                         <span>{formatTime(completedSecs)}</span>
                       ) : segActive && segTime?.elapsed > 0 ? (
@@ -142,7 +145,7 @@ export function GlassProgressBar() {
                   </div>
 
                   {/* Shimmer animation for active (loading) segments */}
-                  {segActive && (
+                  {ENABLE_SHIMMER && segActive && (
                     <div
                       className="absolute inset-0 pointer-events-none overflow-hidden"
                       style={{ zIndex: 5 }}
@@ -171,8 +174,8 @@ export function GlassProgressBar() {
         <div className="flex items-center gap-1.5">
               {isComplete ? (
                 <>
-                  <Check className="w-3 h-3 text-green-600" />
-                  <span className="text-[10px] sm:text-xs font-semibold text-green-700">
+                  <Check className="w-3 h-3 text-[#1B8A4A]" />
+                  <span className="text-[10px] sm:text-xs font-semibold text-[#1B8A4A]">
                     Search Complete
                   </span>
                 </>
@@ -190,9 +193,9 @@ export function GlassProgressBar() {
               ) : null}
             </div>
             <div className="flex items-center gap-1.5">
-              <Clock className={`w-3 h-3 ${isComplete ? 'text-green-600' : 'text-[#A0A2A3]'}`} />
+              <Clock className={`w-3 h-3 ${isComplete ? 'text-[#1B8A4A]' : 'text-[#A0A2A3]'}`} />
               {isComplete && processingTime != null ? (
-                <span className="text-[10px] sm:text-xs font-semibold text-green-700">
+                <span className="text-[10px] sm:text-xs font-semibold text-[#1B8A4A]">
                   Total: {formatTime(Math.round(processingTime))}
                 </span>
               ) : (

@@ -35,6 +35,7 @@ export function EbayGalleryWidget({
   searchKeyword = '',
   limit = 50,
   hideSortOptions = false,
+  onItemClick,
 }) {
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
@@ -205,6 +206,12 @@ export function EbayGalleryWidget({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group bg-[#FDFDF8] rounded-lg border border-[#EEEFE9] hover:border-[#EB9D2A] hover:shadow-md overflow-hidden transition-all"
+                onClick={(e) => {
+                  if (onItemClick) {
+                    e.preventDefault();
+                    onItemClick(getItemUrl(item), item.title);
+                  }
+                }}
               >
                 {/* Image */}
                 <div className="aspect-square bg-[#EEEFE9] overflow-hidden">

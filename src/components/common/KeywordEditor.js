@@ -40,7 +40,7 @@ function KeywordBadge({ value, onChange, onRemove, canRemove }) {
   }, [value]);
 
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full border transition-all duration-200 bg-[#36C46F]/12 text-[#2a9456] border-[#36C46F]/30 focus-within:border-[#36C46F]/60 focus-within:ring-1 focus-within:ring-[#36C46F]/30">
+    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full border transition-all duration-200 bg-[#36C46F]/12 text-[#2a9456] border-[#36C46F]/30 focus-within:border-[#36C46F]/60 focus-within:ring-1 focus-within:ring-[#36C46F]/30 max-w-full min-w-0">
       <Tag className="w-3 h-3 flex-shrink-0" />
 
       {/* Hidden width measurer — same font metrics as the input */}
@@ -56,8 +56,8 @@ function KeywordBadge({ value, onChange, onRemove, canRemove }) {
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent border-none outline-none text-sm text-[#2a9456] font-medium min-w-[2rem]"
-        style={{ width: `${Math.max(32, width)}px` }}
+        className="bg-transparent border-none outline-none text-sm text-[#2a9456] font-medium min-w-[2rem] flex-shrink"
+        style={{ width: `${Math.max(32, width)}px`, maxWidth: 'min(100%, 240px)' }}
         spellCheck={false}
       />
 
@@ -127,7 +127,7 @@ export function KeywordEditor({
   `;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2 w-full min-w-0">
       {/* Keyword badges — always editable */}
       {keywords.map((keyword, idx) => (
         <KeywordBadge

@@ -169,7 +169,6 @@ export function PinterestTab({ onReSearchFromImages }) {
             </button>
             <ReSearchButton
               label="Search Selected"
-              count={selectedCount}
               onClick={() => onReSearchFromImages?.()}
               loading={isReSearching}
               disabled={isReSearching || selectedCount === 0}

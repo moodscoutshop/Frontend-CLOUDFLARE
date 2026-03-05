@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { X, Menu, ChevronDown, Palette } from 'lucide-react';
+import { X, Menu, ChevronDown, Palette, LogIn, Settings, Gift, BookOpen, LogOut } from 'lucide-react';
 import logo from '../../assets/logo.svg';
 import { usePattern } from '../../context/PatternContext';
+import { useAuth } from '../../context/AuthContext';
+import { UserMenu } from '../common/UserMenu';
+import { SettingsModal } from '../modals/SettingsModal';
+import { CreatorApplicationModal } from '../modals/CreatorApplicationModal';
 
 /**
  * PatternSelector - Dropdown menu for selecting background patterns
@@ -127,7 +131,31 @@ function MobilePatternSelector() {
 export function Navbar({ onFeedbackClick }) {
   const [scrollY, setScrollY] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [navDropdownOpen, setNavDropdownOpen] = useState(false);
+  const [actionsDropdownOpen, setActionsDropdownOpen] = useState(false);
+  const navDropdownRef = useRef(null);
+  const actionsDropdownRef = useRef(null);
   const location = useLocation();
+  const { currentUser, isAuthenticated, logout, dbUser } = useAuth();
+  const [showSettings, setShowSettings] = useState(false);
+  const [showCreatorApp, setShowCreatorApp] = useState(false);
+
+  // Close medium-screen dropdowns on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (navDropdownRef.current && !navDropdownRef.current.contains(e.target)) setNavDropdownOpen(false);
+      if (actionsDropdownRef.current && !actionsDropdownRef.current.contains(e.target)) setActionsDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Listen for CreatorApplicationModal open event from SettingsModal
+  useEffect(() => {
+    const handler = () => setShowCreatorApp(true);
+    window.addEventListener('open-creator-application', handler);
+    return () => window.removeEventListener('open-creator-application', handler);
+  }, []);
   
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -160,8 +188,8 @@ export function Navbar({ onFeedbackClick }) {
             </span>
           </Link>
           
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+          {/* Desktop Navigation (lg+) */}
+          <div className="hidden lg:flex items-center gap-6">
             <a 
               href="#how" 
               className="text-sm text-[#3D3F40] hover:text-[#EB9D2A] transition-colors font-medium px-2 py-1 rounded hover:bg-[#EEEFE9]"
@@ -181,6 +209,25 @@ export function Navbar({ onFeedbackClick }) {
               Blog
             </a>
             <PatternSelector />
+            {/* Reward who sent you */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md border border-[#EB9D2A]/40 text-[#B17816] bg-[#EB9D2A]/5 hover:bg-[#EB9D2A]/15 transition-colors"
+            >
+              <Gift className="w-3.5 h-3.5" />
+              Reward who sent you
+            </button>
+            {isAuthenticated ? (
+              <UserMenu onSettingsClick={() => setShowSettings(true)} />
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center gap-1.5 text-sm text-[#3D3F40] hover:text-[#EB9D2A] transition-colors font-medium px-2 py-1 rounded hover:bg-[#EEEFE9]"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </Link>
+            )}
             <button
               onClick={onFeedbackClick}
               className="btn-secondary"
@@ -188,7 +235,104 @@ export function Navbar({ onFeedbackClick }) {
               Share Feedback
             </button>
           </div>
-          
+
+          {/* Medium Navigation (md to lg) — two compact dropdowns */}
+          <div className="hidden md:flex lg:hidden items-center gap-2">
+            {/* Dropdown 1: Nav links */}
+            <div className="relative" ref={navDropdownRef}>
+              <button
+                onClick={() => { setNavDropdownOpen(v => !v); setActionsDropdownOpen(false); }}
+                className="flex items-center gap-1.5 text-sm text-[#3D3F40] hover:text-[#EB9D2A] font-medium px-2 py-1.5 rounded hover:bg-[#EEEFE9] transition-colors"
+              >
+                <BookOpen className="w-4 h-4" />
+                Explore
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${navDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {navDropdownOpen && (
+                <div className="absolute left-0 top-full mt-1 w-44 bg-white border border-[#D4CFC0] rounded-lg shadow-lg py-1 z-50">
+                  <a href="#how" onClick={() => setNavDropdownOpen(false)}
+                    className="block px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">How It Works</a>
+                  <a href="#features" onClick={() => setNavDropdownOpen(false)}
+                    className="block px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">Features</a>
+                  <a href="#blog" onClick={() => setNavDropdownOpen(false)}
+                    className="block px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">Blog</a>
+                  <div className="border-t border-[#E0DCCE] my-1" />
+                  <div className="px-3 py-1"><PatternSelector /></div>
+                </div>
+              )}
+            </div>
+
+            {/* Reward who sent you button */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex items-center gap-1.5 text-sm font-medium px-2.5 py-1.5 rounded-md border border-[#EB9D2A]/40 text-[#B17816] bg-[#EB9D2A]/5 hover:bg-[#EB9D2A]/15 transition-colors"
+            >
+              <Gift className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Reward who sent you</span>
+            </button>
+
+            {/* Dropdown 2: User actions */}
+            <div className="relative" ref={actionsDropdownRef}>
+              <button
+                onClick={() => { setActionsDropdownOpen(v => !v); setNavDropdownOpen(false); }}
+                className="flex items-center gap-1.5 text-sm text-[#3D3F40] hover:text-[#EB9D2A] font-medium px-2 py-1.5 rounded hover:bg-[#EEEFE9] transition-colors"
+              >
+                {isAuthenticated && currentUser?.photoURL ? (
+                  <img src={currentUser.photoURL} alt="" className="w-5 h-5 rounded-full object-cover" />
+                ) : isAuthenticated ? (
+                  <div className="w-5 h-5 rounded-full bg-[#EB9D2A] flex items-center justify-center text-white text-[10px] font-bold">
+                    {(currentUser?.displayName?.[0] || currentUser?.email?.[0] || 'U').toUpperCase()}
+                  </div>
+                ) : (
+                  <LogIn className="w-4 h-4" />
+                )}
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${actionsDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {actionsDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-[#D4CFC0] rounded-lg shadow-lg py-1 z-50">
+                  {isAuthenticated ? (
+                    <>
+                      <div className="px-3 py-2 border-b border-[#E0DCCE]">
+                        <div className="text-xs font-semibold text-[#5D5F60] uppercase tracking-wide">Signed in as</div>
+                        <div className="text-sm text-[#3D3F40] truncate font-medium">{currentUser?.email}</div>
+                      </div>
+                      <button onClick={() => { setActionsDropdownOpen(false); setShowSettings(true); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">
+                        <Settings className="w-4 h-4" /> Settings
+                      </button>
+                      {(dbUser?.role === 'creator' || dbUser?.role === 'admin') && (
+                        <Link to="/creator/dashboard" onClick={() => setActionsDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">
+                          Influencer Dashboard
+                        </Link>
+                      )}
+                      <div className="border-t border-[#E0DCCE] my-1" />
+                      <button onClick={() => { setActionsDropdownOpen(false); onFeedbackClick?.(); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">
+                        Share Feedback
+                      </button>
+                      <button onClick={() => { setActionsDropdownOpen(false); logout(); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-[#EEEFE9] transition-colors">
+                        <LogOut className="w-4 h-4" /> Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link to="/login" onClick={() => setActionsDropdownOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">
+                        <LogIn className="w-4 h-4" /> Sign In
+                      </Link>
+                      <button onClick={() => { setActionsDropdownOpen(false); onFeedbackClick?.(); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] transition-colors">
+                        Share Feedback
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -230,6 +374,57 @@ export function Navbar({ onFeedbackClick }) {
               
               {/* Mobile Pattern Selector */}
               <MobilePatternSelector />
+
+              {/* Reward who sent you */}
+              <button
+                onClick={() => { setMobileMenuOpen(false); setShowSettings(true); }}
+                className="flex items-center gap-2 text-sm text-[#B17816] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] py-2 px-2 rounded transition-colors font-medium border-t border-[#D4CFC0]/50 mt-2 pt-2"
+              >
+                <Gift className="w-4 h-4" />
+                Reward who sent you
+              </button>
+
+              {/* Auth button */}
+              {isAuthenticated ? (
+                <div className="flex flex-col gap-1 border-t border-[#D4CFC0]/50 mt-2 pt-2">
+                  <Link
+                    to="/app"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] py-2 px-2 rounded transition-colors font-medium flex items-center gap-2"
+                  >
+                    {currentUser?.photoURL ? (
+                      <img src={currentUser.photoURL} alt="" className="w-5 h-5 rounded-full" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-[#EB9D2A] flex items-center justify-center text-white text-[10px] font-bold">
+                        {(currentUser?.displayName?.[0] || 'U').toUpperCase()}
+                      </div>
+                    )}
+                    My Searches
+                  </Link>
+                  <button
+                    onClick={() => { setMobileMenuOpen(false); setShowSettings(true); }}
+                    className="text-sm text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] py-2 px-2 rounded transition-colors font-medium text-left flex items-center gap-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </button>
+                  <button
+                    onClick={() => { setMobileMenuOpen(false); logout(); }}
+                    className="text-sm text-[#5D5F60] hover:text-red-500 hover:bg-[#EEEFE9] py-2 px-2 rounded transition-colors font-medium text-left"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 text-sm text-[#EB9D2A] hover:bg-[#EEEFE9] py-2 px-2 rounded transition-colors font-medium border-t border-[#D4CFC0]/50 mt-2 pt-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Sign In
+                </Link>
+              )}
               
               <button
                 onClick={() => {
@@ -244,6 +439,10 @@ export function Navbar({ onFeedbackClick }) {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <CreatorApplicationModal isOpen={showCreatorApp} onClose={() => setShowCreatorApp(false)} />
     </nav>
   );
 }

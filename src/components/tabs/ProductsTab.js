@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   ShoppingBag, ExternalLink, TrendingUp, AlertCircle, 
   Filter, X, Tag, ChevronDown, ChevronUp, ArrowUpDown, Loader2, Sparkles, Brain 
@@ -8,6 +8,20 @@ import { useSearch } from '../../context/SearchContext';
 import { CategoryDropdown } from '../ProductFilters';
 import { EbayGalleryWidget } from '../common/EbayGalleryWidget';
 import { GlassProgressBar, KeywordEditor, ReSearchButton } from '../common';
+import { useReferralCode } from '../../hooks/useReferralCode';
+import { ReferralCodeModal } from '../modals/ReferralCodeModal';
+
+// Predefined palette for condition badges — distinct, accessible colors
+const CONDITION_COLORS = [
+  { bg: '#36C46F', text: '#FFFFFF' },   // Green - typically "New"
+  { bg: '#2F80FA', text: '#FFFFFF' },   // Blue - typically "Open Box"
+  { bg: '#B62AD9', text: '#FFFFFF' },   // Purple - typically "Certified Refurbished"
+  { bg: '#EB9D2A', text: '#FFFFFF' },   // Amber - typically "Pre-Owned"
+  { bg: '#E60023', text: '#FFFFFF' },   // Red - typically "For Parts"
+  { bg: '#0D7C5F', text: '#FFFFFF' },   // Teal - typically "Good - Refurbished"
+  { bg: '#1D4AFF', text: '#FFFFFF' },   // Deep blue
+  { bg: '#D4541C', text: '#FFFFFF' },   // Burnt orange
+];
 
 // Placeholder image for products without images
 const NO_IMAGE_PLACEHOLDER = 'https://www.freeiconspng.com/uploads/no-image-icon-6.png';
@@ -293,7 +307,7 @@ function SortDropdown({ sortBy, sortOrder, onSortChange }) {
 /**
  * ProductCard - Individual product display
  */
-function ProductCard({ product, index, searchType }) {
+function ProductCard({ product, index, searchType, conditionColorMap, onProductClick }) {
   const { 
     expandedCards, setExpandedCards,
     loadingRelevance, setLoadingRelevance,
@@ -372,7 +386,18 @@ function ProductCard({ product, index, searchType }) {
   return (
     <div className="group bg-[#FDFDF8] rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-[#D4CFC0] hover:border-[#EB9D2A] flex flex-col">
       {/* Product Image */}
-      <a href={product.url || '#'} target="_blank" rel="noopener noreferrer" className="block">
+      <a
+        href={product.url || '#'}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block"
+        onClick={(e) => {
+          if (onProductClick) {
+            e.preventDefault();
+            onProductClick(product.url || '#', product.name);
+          }
+        }}
+      >
         <div className="aspect-square relative overflow-hidden bg-[#EEEFE9]">
           <img
             src={product.image || NO_IMAGE_PLACEHOLDER}
@@ -387,7 +412,13 @@ function ProductCard({ product, index, searchType }) {
           
           {/* Badges - stacked on mobile, left/right on larger screens */}
           {product.condition && (
-            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-[#E60023]/90 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded z-10">
+            <div
+              className="absolute top-2 left-2 sm:top-3 sm:left-3 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded z-10 font-medium"
+              style={{
+                backgroundColor: (conditionColorMap?.[product.condition]?.bg || '#E60023') + 'E6',
+                color: conditionColorMap?.[product.condition]?.text || '#FFFFFF',
+              }}
+            >
               {product.condition}
             </div>
           )}
@@ -423,7 +454,17 @@ function ProductCard({ product, index, searchType }) {
       
       {/* Product Info */}
       <div className="p-2.5 sm:p-3 flex-1 flex flex-col">
-        <a href={product.url || '#'} target="_blank" rel="noopener noreferrer">
+        <a
+          href={product.url || '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => {
+            if (onProductClick) {
+              e.preventDefault();
+              onProductClick(product.url || '#', product.name);
+            }
+          }}
+        >
           <h4 className="font-semibold text-[#1D1F20] text-xs sm:text-sm line-clamp-2 group-hover:text-[#EB9D2A] transition-colors mb-1.5">
             {product.name || 'Untitled Product'}
           </h4>
@@ -439,6 +480,12 @@ function ProductCard({ product, index, searchType }) {
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 text-[#36C46F] text-xs sm:text-sm font-medium hover:text-[#01a354] transition-all flex-shrink-0 opacity-0 group-hover:opacity-100"
+            onClick={(e) => {
+              if (onProductClick) {
+                e.preventDefault();
+                onProductClick(product.url || '#', product.name);
+              }
+            }}
           >
             <ExternalLink className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">View on eBay</span>
@@ -548,6 +595,29 @@ export function ProductsTab({ onReSearchFromKeywords }) {
   
   const hasActiveFilters = selectedKeywordFilters.length > 0 || selectedCategoryFilters.length > 0;
 
+  // Referral code modal state
+  const {
+    isModalOpen: isReferralModalOpen,
+    pendingProductTitle: referralProductTitle,
+    shouldShowModal,
+    referralCode: activeReferralCode,
+    openReferralModal,
+    confirmReferral,
+    cancelReferral,
+    dismissReferral,
+    DEFAULT_REFERRAL_CODE: defaultReferralCode,
+  } = useReferralCode();
+
+  /**
+   * Intercept any eBay product click — open the referral modal instead of navigating.
+   * (The hook handles whether to show the modal or redirect immediately.)
+   * @param {string} url - eBay product URL
+   * @param {string} [title] - Optional product title for context
+   */
+  const handleProductClick = (url, title) => {
+    openReferralModal(url, title);
+  };
+
   // AI analysis collapsible state
   const [showAnalysis, setShowAnalysis] = useState(true);
   const isReSearching = isSearching && reSearchSource === 'keywords';
@@ -556,6 +626,17 @@ export function ProductsTab({ onReSearchFromKeywords }) {
   const [showMoreLoading, setShowMoreLoading] = useState(false);
   const [showMoreDepth, setShowMoreDepth] = useState(4); // products per keyword so far (initial search = 4)
   const prevIsSearchingRef = useRef(isSearching);
+
+  // Build condition → color map from all products
+  const conditionColorMap = useMemo(() => {
+    if (!productsData || productsData.length === 0) return {};
+    const conditions = [...new Set(productsData.map(p => p.condition).filter(Boolean))];
+    const map = {};
+    conditions.forEach((cond, idx) => {
+      map[cond] = CONDITION_COLORS[idx % CONDITION_COLORS.length];
+    });
+    return map;
+  }, [productsData]);
 
   // Reset show-more depth when a new search completes (isSearching true -> false)
   useEffect(() => {
@@ -577,6 +658,13 @@ export function ProductsTab({ onReSearchFromKeywords }) {
         body: JSON.stringify({
           keywords: searchKeywords,
           productsPerKeyword: nextDepth,
+          // Pass full analysis data for relevance scoring
+          analysis: {
+            contents: analysisData?.contents || [],
+            color_palette: analysisData?.color_palette || [],
+            category: analysisData?.category,
+            theme: analysisData?.theme,
+          },
         }),
       });
       const data = await response.json();
@@ -679,10 +767,10 @@ export function ProductsTab({ onReSearchFromKeywords }) {
                     <div>
                       <div className="flex flex-wrap gap-3 mb-4">
                         <span className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full bg-[#B62AD9]/15 text-[#B62AD9]">
-                          {analysisData.category}
+                          Category: {analysisData.category}
                         </span>
                         <span className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full bg-[#2F80FA]/15 text-[#2F80FA]">
-                          {analysisData.theme}
+                          Theme: {analysisData.theme}
                         </span>
                       </div>
                       <p className="text-[#3D3F40] leading-relaxed text-sm">
@@ -742,7 +830,6 @@ export function ProductsTab({ onReSearchFromKeywords }) {
                       </p>
                       <ReSearchButton
                         label="Search Keywords"
-                        count={editedKeywords.length}
                         onClick={() => onReSearchFromKeywords?.()}
                         loading={isReSearching}
                         disabled={isReSearching || editedKeywords.length === 0}
@@ -914,6 +1001,7 @@ export function ProductsTab({ onReSearchFromKeywords }) {
               searchKeyword={searchQuery || ''}
               limit={50}
               hideSortOptions={false}
+              onItemClick={handleProductClick}
             />
           </div>
         ) : (
@@ -926,6 +1014,8 @@ export function ProductsTab({ onReSearchFromKeywords }) {
                   product={product}
                   index={index}
                   searchType={searchType}
+                  conditionColorMap={conditionColorMap}
+                  onProductClick={handleProductClick}
                 />
               ))}
             </div>
@@ -969,6 +1059,16 @@ export function ProductsTab({ onReSearchFromKeywords }) {
           <p className="text-[#5D5F60]">Matched products will appear here once found.</p>
         </div>
       )}
+
+      {/* Referral Code Modal — shown before every eBay redirect */}
+      <ReferralCodeModal
+        isOpen={isReferralModalOpen}
+        defaultCode={defaultReferralCode}
+        onConfirm={confirmReferral}
+        onCancel={cancelReferral}
+        onDismiss={dismissReferral}
+        productTitle={referralProductTitle}
+      />
     </div>
   );
 }

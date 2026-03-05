@@ -2,3 +2,7 @@
 export { WaitlistModal } from './WaitlistModal';
 export { ArticleModal } from './ArticleModal';
 export { VisualSearchModal } from './VisualSearchModal';
+export { ReferralCodeModal } from './ReferralCodeModal';
+export { SettingsModal } from './SettingsModal';
+export { CreatorApplicationModal } from './CreatorApplicationModal';
+export { PrecisionSearchAuthModal } from './PrecisionSearchAuthModal';

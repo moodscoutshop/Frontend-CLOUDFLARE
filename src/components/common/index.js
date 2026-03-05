@@ -14,4 +14,6 @@ export { ImageSelectionOverlay } from './ImageSelectionOverlay';
 export { KeywordEditor } from './KeywordEditor';
 export { ReSearchButton } from './ReSearchButton';
 export { default as ImageGrid } from './ImageGrid';
+export { UserMenu } from './UserMenu';
+
 

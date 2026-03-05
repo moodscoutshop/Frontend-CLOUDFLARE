@@ -6,8 +6,9 @@ import {
 } from 'lucide-react';
 import { useSearch } from '../context/SearchContext';
 import { usePattern } from '../context/PatternContext';
+import { useAuth } from '../context/AuthContext';
 import { Navbar, Footer } from '../components/layout';
-import { WaitlistModal, ArticleModal, VisualSearchModal } from '../components/modals';
+import { WaitlistModal, ArticleModal, VisualSearchModal, PrecisionSearchAuthModal } from '../components/modals';
 import { SpotlightCard, GradientText, Stack, ScrollToTopButton } from '../components/common';
 import { PrecisionSearchToggle } from '../components/common/PrecisionSearchToggle';
 
@@ -31,11 +32,22 @@ import etsyLogo from '../assets/etsy-ar21.svg';
 export function LandingPage() {
   const navigate = useNavigate();
   const { searchQuery, setSearchQuery, resetSearch, precisionSearch, setPrecisionSearch } = useSearch();
-  
+  const { currentUser } = useAuth();
+
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [showArticleModal, setShowArticleModal] = useState(false);
   const [showVisualSearchModal, setShowVisualSearchModal] = useState(false);
+  const [showPrecisionAuthModal, setShowPrecisionAuthModal] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
+
+  // Gate: only allow enabling precision search when logged in
+  const handlePrecisionChange = (newValue) => {
+    if (newValue && !currentUser) {
+      setShowPrecisionAuthModal(true);
+      return;
+    }
+    setPrecisionSearch(newValue);
+  };
 
   // Desktop drag & drop visual search intake (UX-only enhancement layer)
   const [queuedImageFiles, setQueuedImageFiles] = useState([]);
@@ -387,7 +399,13 @@ export function LandingPage() {
         onClose={() => setShowVisualSearchModal(false)}
         onSearchWithImages={handleSearchWithImages}
       />
-      
+
+      {/* Precision Search auth gate */}
+      <PrecisionSearchAuthModal
+        isOpen={showPrecisionAuthModal}
+        onClose={() => setShowPrecisionAuthModal(false)}
+      />
+
       {/* Hero Section */}
       <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 overflow-visible">
         
@@ -599,7 +617,7 @@ export function LandingPage() {
                         <div className="px-4 py-2.5">
                           <PrecisionSearchToggle
                             value={precisionSearch}
-                            onChange={setPrecisionSearch}
+                            onChange={handlePrecisionChange}
                             className="w-full"
                           />
                         </div>
@@ -643,7 +661,7 @@ export function LandingPage() {
                   {/* Precision Search Toggle */}
                   <PrecisionSearchToggle
                     value={precisionSearch}
-                    onChange={setPrecisionSearch}
+                    onChange={handlePrecisionChange}
                     variant="inline"
                   />
                 </div>
