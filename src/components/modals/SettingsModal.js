@@ -8,11 +8,11 @@
  * 2. Creator Program — apply or manage creator referral code
  * 3. Notifications — view unread notifications
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   X, Tag, Settings, Bell, Sparkles, Check, AlertCircle,
-  ChevronRight, Loader2, Copy, Clock, Shield,
+  ChevronRight, Loader2, Copy, Clock, Shield, AlertTriangle, CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { referralAPI } from '../../lib/api';
@@ -23,6 +23,10 @@ export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralC
   const [codeInput, setCodeInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
+
+  // Referral code verification state
+  const [codeVerifyStatus, setCodeVerifyStatus] = useState(null); // null | 'loading' | { valid, type, creator? }
+  const codeVerifyRef = useRef(null);
 
   // Profile / role info
   const [profile, setProfile] = useState(null);
@@ -63,6 +67,9 @@ export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralC
         })
         .catch(() => { /* prop fallback already applied above */ });
 
+      // Clear verification state on open
+      setCodeVerifyStatus(null);
+
       if (isAuthenticated) {
         loadProfile();
         loadNotifications();
@@ -72,6 +79,33 @@ export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralC
     }
     return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen, referralCode, isAuthenticated]);
+
+  // Debounced referral code verification
+  useEffect(() => {
+    if (!isOpen) return;
+    const trimmed = (codeInput || '').trim();
+
+    // Don't verify if empty, default, or same as currently saved code
+    if (!trimmed || trimmed.toLowerCase() === 'moodscout' || trimmed === referralCode) {
+      setCodeVerifyStatus(null);
+      return;
+    }
+
+    setCodeVerifyStatus('loading');
+    if (codeVerifyRef.current) clearTimeout(codeVerifyRef.current);
+    codeVerifyRef.current = setTimeout(async () => {
+      try {
+        const res = await referralAPI.verifyCode(trimmed);
+        setCodeVerifyStatus(res.data);
+      } catch {
+        setCodeVerifyStatus(null);
+      }
+    }, 400);
+
+    return () => {
+      if (codeVerifyRef.current) clearTimeout(codeVerifyRef.current);
+    };
+  }, [codeInput, isOpen, referralCode]);
 
   const loadProfile = useCallback(async () => {
     setProfileLoading(true);
@@ -250,6 +284,29 @@ export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralC
                 <p className="text-[11px] text-[#A0A2A3]">
                   Default: <span className="font-mono text-[#5D5F60]">moodscout</span>
                 </p>
+
+                {/* Referral code validation feedback */}
+                {codeVerifyStatus === 'loading' && (
+                  <div className="flex items-center gap-1.5 text-xs text-[#5D5F60]">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Checking referral code…
+                  </div>
+                )}
+                {codeVerifyStatus && codeVerifyStatus !== 'loading' && codeVerifyStatus.valid && codeVerifyStatus.type === 'creator' && (
+                  <div className="flex items-center gap-1.5 text-xs text-green-600">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Supporting <span className="font-semibold">{codeVerifyStatus.creator}</span>
+                  </div>
+                )}
+                {codeVerifyStatus && codeVerifyStatus !== 'loading' && !codeVerifyStatus.valid && (
+                  <div className="flex items-start gap-1.5 p-2 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-700">
+                    <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                    <span>
+                      This referral code does not belong to any active influencer.
+                      You won't be supporting any creator with this code.
+                    </span>
+                  </div>
+                )}
               </div>
 
               {saveMessage && (

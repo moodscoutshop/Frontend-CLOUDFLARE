@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X, Menu, ArrowLeft, Plus, Camera, ChevronDown, Pencil, Search, Paperclip, Settings, LogIn, Gift, Sparkles } from 'lucide-react';
+import { X, Menu, ArrowLeft, Plus, Camera, ChevronDown, Pencil, Search, Paperclip, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../../assets/logo.svg';
 import { useSearch } from '../../context/SearchContext';
@@ -18,7 +18,7 @@ import { UserMenu } from '../common/UserMenu';
 export function ResultsNavbar({ onNewSearch }) {
   const navigate = useNavigate();
   const { searchQuery, setSearchQuery, isSearching, precisionSearch, setPrecisionSearch } = useSearch();
-  const { isAuthenticated, dbUser, currentUser, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [localQuery, setLocalQuery] = useState(searchQuery);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showVisualSearchModal, setShowVisualSearchModal] = useState(false);
@@ -632,28 +632,11 @@ export function ResultsNavbar({ onNewSearch }) {
               </div>
             </div>
             
-            {/* Desktop: Reward who sent you */}
-            <button
-              onClick={() => setShowSettings(true)}
-              className="hidden sm:flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md border border-[#EB9D2A]/40 text-[#B17816] bg-[#EB9D2A]/5 hover:bg-[#EB9D2A]/15 transition-colors flex-shrink-0"
-            >
-              <Gift className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Reward who sent you</span>
-            </button>
-
-            {/* Desktop: Sign In (unauthenticated) or User Menu (authenticated) */}
-            {isAuthenticated ? (
+            {/* Desktop: User Menu */}
+            {isAuthenticated && (
               <div className="hidden sm:block flex-shrink-0">
                 <UserMenu onSettingsClick={() => setShowSettings(true)} />
               </div>
-            ) : (
-              <Link
-                to="/login"
-                className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-[#3D3F40] hover:text-[#EB9D2A] transition-colors px-2 py-1.5 rounded hover:bg-[#EEEFE9] flex-shrink-0"
-              >
-                <LogIn className="w-4 h-4" />
-                <span className="hidden md:inline">Sign In</span>
-              </Link>
             )}
 
             {/* Mobile Menu Button */}
@@ -700,67 +683,14 @@ export function ResultsNavbar({ onNewSearch }) {
               <p className="text-xs text-[#5D5F60] mt-1 ml-9">
                 Generate specific product descriptions
               </p>
-
-              {/* Mobile: Reward who sent you (always visible) */}
-              <button
-                onClick={() => { setMobileMenuOpen(false); setShowSettings(true); }}
-                className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#B17816] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] px-2 rounded transition-colors border-t border-[#D4CFC0]/50 mt-2 pt-2"
-              >
-                <Gift className="w-4 h-4" />
-                Reward who sent you
-              </button>
-
-              {isAuthenticated ? (
-                <>
-                  {/* Profile row */}
-                  <div className="flex items-center gap-2 px-2 py-2 border-t border-[#D4CFC0]/50 mt-2 pt-2">
-                    {currentUser?.photoURL ? (
-                      <img src={currentUser.photoURL} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-[#EB9D2A] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                        {(currentUser?.displayName?.[0] || currentUser?.email?.[0] || 'U').toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <div className="text-xs font-semibold text-[#1D1F20] truncate">
-                        {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User'}
-                      </div>
-                      <div className="text-[10px] text-[#5D5F60] truncate">{currentUser?.email}</div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => { setMobileMenuOpen(false); setShowSettings(true); }}
-                    className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
-                  >
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </button>
-                  {(dbUser?.role === 'creator' || dbUser?.role === 'admin') && (
-                    <Link
-                      to="/creator/dashboard"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      Influencer Dashboard
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => { setMobileMenuOpen(false); logout(); }}
-                    className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#5D5F60] hover:text-red-500 hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
-                  >
-                    <LogIn className="w-4 h-4 rotate-180" />
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#EB9D2A] hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
+              {isAuthenticated && (
+                <button
+                  onClick={() => { setMobileMenuOpen(false); setShowSettings(true); }}
+                  className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#3D3F40] hover:text-[#EB9D2A] transition-colors border-t border-[#D4CFC0]/50 mt-2 pt-2"
                 >
-                  <LogIn className="w-4 h-4" />
-                  Sign In
-                </Link>
+                  <Settings className="w-4 h-4" />
+                  Settings
+                </button>
               )}
             </div>
           )}

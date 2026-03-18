@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Tag, ExternalLink, ShoppingBag } from 'lucide-react';
+import { X, Tag, ExternalLink, ShoppingBag, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import { referralAPI } from '../../lib/api';
 
 /**
  * ReferralCodeModal
@@ -24,7 +25,9 @@ export function ReferralCodeModal({
   productTitle,
 }) {
   const [code, setCode] = useState('');
+  const [verifyStatus, setVerifyStatus] = useState(null); // null | 'loading' | { valid, type, creator? }
   const inputRef = useRef(null);
+  const debounceRef = useRef(null);
 
   // Focus the input when the modal opens
   useEffect(() => {
@@ -36,11 +39,39 @@ export function ReferralCodeModal({
     } else {
       document.body.style.overflow = 'unset';
       setCode(''); // reset for next open
+      setVerifyStatus(null);
     }
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
+
+  // Debounced referral code verification
+  useEffect(() => {
+    const trimmed = code.trim();
+
+    // Don't verify empty input or the default code
+    if (!trimmed || trimmed.toLowerCase() === defaultCode.toLowerCase()) {
+      setVerifyStatus(null);
+      return;
+    }
+
+    setVerifyStatus('loading');
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await referralAPI.verifyCode(trimmed);
+        setVerifyStatus(res.data);
+      } catch {
+        setVerifyStatus(null);
+      }
+    }, 400);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [code, defaultCode]);
 
   if (!isOpen) return null;
 
@@ -138,6 +169,29 @@ export function ReferralCodeModal({
             <p className="text-[11px] text-[#A0A2A3]">
               Default: <span className="font-mono text-[#5D5F60]">{defaultCode}</span>
             </p>
+
+            {/* Referral code validation feedback */}
+            {verifyStatus === 'loading' && (
+              <div className="flex items-center gap-1.5 text-xs text-[#5D5F60]">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Checking referral code…
+              </div>
+            )}
+            {verifyStatus && verifyStatus !== 'loading' && verifyStatus.valid && verifyStatus.type === 'creator' && (
+              <div className="flex items-center gap-1.5 text-xs text-green-600">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Supporting <span className="font-semibold">{verifyStatus.creator}</span>
+              </div>
+            )}
+            {verifyStatus && verifyStatus !== 'loading' && !verifyStatus.valid && (
+              <div className="flex items-start gap-1.5 p-2 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-700">
+                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                <span>
+                  This referral code does not belong to any active influencer.
+                  You won't be supporting any creator with this code.
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
