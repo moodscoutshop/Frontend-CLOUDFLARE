@@ -5,3 +5,4 @@ export { SignupPage } from './SignupPage';
 export { AdminLoginPage } from './AdminLoginPage';
 export { AdminDashboard } from './AdminDashboard';
 export { CreatorDashboard } from './CreatorDashboard';
+export { PrivacyPolicyPage } from './PrivacyPolicyPage';

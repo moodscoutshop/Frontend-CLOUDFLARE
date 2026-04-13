@@ -15,7 +15,16 @@ import { SearchProvider } from './context/SearchContext';
 import { PatternProvider } from './context/PatternContext';
 import { AuthProvider } from './context/AuthContext';
 import { AppLayout } from './components/layout';
-import { LandingPage, ResultsPage, LoginPage, SignupPage, AdminLoginPage, AdminDashboard, CreatorDashboard } from './pages';
+import {
+  LandingPage,
+  ResultsPage,
+  LoginPage,
+  SignupPage,
+  AdminLoginPage,
+  AdminDashboard,
+  CreatorDashboard,
+  PrivacyPolicyPage,
+} from './pages';
 
 /**
  * App Component - Root component with router configuration
@@ -52,6 +61,9 @@ export default function App() {
 
               {/* ─── Creator dashboard (requires creator role) ─── */}
               <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+
+              {/* ─── Public legal route for Shopify listing compliance ─── */}
+              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
               {/* Fallback to landing page for unknown routes */}
               <Route path="*" element={<LandingPage />} />

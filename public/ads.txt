@@ -1,0 +1,6 @@
+# Ezoic Ads.txt
+# This file will eventually contain your full verified seller list from Ezoic.
+# In production on Vercel, it is recommended to use vercel.json redirects to auto-update this list.
+
+# Once your domain is fully registered with Ezoic, your true ads.txt data will appear at:
+# https://srv.adstxtmanager.com/19390/moodscout.shop

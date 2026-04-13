@@ -467,9 +467,9 @@ export function Footer() {
           
           {/* Links */}
           <div className="flex gap-6 text-sm text-[#5D5F60]">
-            <a href="#" className="hover:text-[#EB9D2A] transition-colors">Privacy</a>
-            <a href="#" className="hover:text-[#EB9D2A] transition-colors">Terms</a>
-            <a href="#" className="hover:text-[#EB9D2A] transition-colors">Contact</a>
+            <Link to="/privacy-policy" className="hover:text-[#EB9D2A] transition-colors">Privacy</Link>
+            <a href="https://www.moodscout.shop/terms" className="hover:text-[#EB9D2A] transition-colors">Terms</a>
+            <a href="mailto:moodscoutshop@gmail.com" className="hover:text-[#EB9D2A] transition-colors">Contact</a>
           </div>
           
           {/* Copyright */}
