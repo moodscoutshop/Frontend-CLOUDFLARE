@@ -1,129 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { X, Menu, ChevronDown, Palette, LogIn, Settings, Gift, BookOpen, LogOut } from 'lucide-react';
+import { X, Menu, ChevronDown, ExternalLink, Store, LogIn, Settings, Gift, BookOpen, LogOut } from 'lucide-react';
 import logo from '../../assets/logo.svg';
-import { usePattern } from '../../context/PatternContext';
+
 import { useAuth } from '../../context/AuthContext';
 import { UserMenu } from '../common/UserMenu';
 import { SettingsModal } from '../modals/SettingsModal';
 import { CreatorApplicationModal } from '../modals/CreatorApplicationModal';
 
 /**
- * PatternSelector - Dropdown menu for selecting background patterns
+ * ShopifyAppButton - Link button to MoodScout Shopify App Store page
  */
-function PatternSelector() {
-  const { selectedPattern, setSelectedPattern, patterns } = usePattern();
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const currentPatternName = patterns.find(p => p.id === selectedPattern)?.name || 'Pattern';
-
+function ShopifyAppButton() {
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
+    <div className="relative group">
+      <a
+        href="https://apps.shopify.com/moodscout"
+        target="_blank"
+        rel="noopener noreferrer"
         className="flex items-center gap-1.5 text-sm text-[#3D3F40] hover:text-[#EB9D2A] transition-colors font-medium px-2 py-1 rounded hover:bg-[#EEEFE9]"
-        aria-expanded={isOpen}
-        aria-haspopup="true"
+        aria-label="MoodScout on Shopify App Store – widget for Shopify store owners"
       >
-        <Palette className="w-4 h-4" />
-        <span className="hidden lg:inline">{currentPatternName}</span>
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-1 w-48 bg-white border border-[#D4CFC0] rounded-lg shadow-lg py-1 z-50">
-          <div className="px-3 py-1.5 text-xs font-semibold text-[#5D5F60] uppercase tracking-wide border-b border-[#E0DCCE]">
-            Background Pattern
-          </div>
-          {patterns.map((pattern) => (
-            <button
-              key={pattern.id}
-              onClick={() => {
-                setSelectedPattern(pattern.id);
-                setIsOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2 ${
-                selectedPattern === pattern.id
-                  ? 'bg-[#EB9D2A]/10 text-[#EB9D2A] font-medium'
-                  : 'text-[#3D3F40] hover:bg-[#EEEFE9]'
-              }`}
-            >
-              {selectedPattern === pattern.id && (
-                <span className="w-1.5 h-1.5 bg-[#EB9D2A] rounded-full" />
-              )}
-              <span className={selectedPattern === pattern.id ? '' : 'ml-3.5'}>
-                {pattern.name}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
+        <Store className="w-4 h-4" />
+        <span className="hidden lg:inline">Shopify App</span>
+        <ExternalLink className="w-3 h-3 opacity-50" />
+      </a>
+      {/* Hover tooltip */}
+      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 bg-[#1D1F20] text-white text-xs rounded-lg px-3 py-2.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#1D1F20] rotate-45 rounded-sm" />
+        Check out our Shopify Store page, we built a widget for Shopify Store owners
+      </div>
     </div>
   );
 }
 
-/**
- * MobilePatternSelector - Pattern selector for mobile menu (accordion style)
- */
-function MobilePatternSelector() {
-  const { selectedPattern, setSelectedPattern, patterns } = usePattern();
-  const [isExpanded, setIsExpanded] = useState(false);
 
-  const currentPatternName = patterns.find(p => p.id === selectedPattern)?.name || 'Pattern';
-
-  return (
-    <div className="border-t border-[#D4CFC0]/50 mt-2 pt-2">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between text-sm text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] py-2 px-2 rounded transition-colors font-medium"
-      >
-        <div className="flex items-center gap-2">
-          <Palette className="w-4 h-4" />
-          <span>Pattern: {currentPatternName}</span>
-        </div>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-      </button>
-      
-      {isExpanded && (
-        <div className="ml-4 mt-1 space-y-1">
-          {patterns.map((pattern) => (
-            <button
-              key={pattern.id}
-              onClick={() => {
-                setSelectedPattern(pattern.id);
-                setIsExpanded(false);
-              }}
-              className={`w-full text-left px-3 py-1.5 text-sm rounded transition-colors flex items-center gap-2 ${
-                selectedPattern === pattern.id
-                  ? 'bg-[#EB9D2A]/10 text-[#EB9D2A] font-medium'
-                  : 'text-[#5D5F60] hover:bg-[#EEEFE9]'
-              }`}
-            >
-              {selectedPattern === pattern.id && (
-                <span className="w-1.5 h-1.5 bg-[#EB9D2A] rounded-full" />
-              )}
-              <span className={selectedPattern === pattern.id ? '' : 'ml-3.5'}>
-                {pattern.name}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /**
  * Navbar - Main navigation bar for landing page
@@ -182,6 +93,8 @@ export function Navbar({ onFeedbackClick }) {
               src={logo}
               alt="MoodScout Logo"
               className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
+              width="32"
+              height="32"
             />
             <span className="text-lg sm:text-xl font-bold text-[#1D1F20]">
               MoodScout
@@ -208,7 +121,7 @@ export function Navbar({ onFeedbackClick }) {
             >
               Blog
             </a>
-            <PatternSelector />
+            <ShopifyAppButton />
             {/* Reward who sent you */}
             <button
               onClick={() => setShowSettings(true)}
@@ -257,7 +170,18 @@ export function Navbar({ onFeedbackClick }) {
                   <a href="#blog" onClick={() => setNavDropdownOpen(false)}
                     className="block px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">Blog</a>
                   <div className="border-t border-[#E0DCCE] my-1" />
-                  <div className="px-3 py-1"><PatternSelector /></div>
+                  <a
+                    href="https://apps.shopify.com/moodscout"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setNavDropdownOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors"
+                  >
+                    <Store className="w-4 h-4" />
+                    <span>Shopify App</span>
+                    <ExternalLink className="w-3 h-3 opacity-50 ml-auto" />
+                  </a>
+                  <p className="px-3 pb-2 text-xs text-[#5D5F60] leading-snug">Widget for Shopify store owners</p>
                 </div>
               )}
             </div>
@@ -372,8 +296,23 @@ export function Navbar({ onFeedbackClick }) {
                 Blog
               </a>
               
-              {/* Mobile Pattern Selector */}
-              <MobilePatternSelector />
+              {/* Shopify App link */}
+              <div className="border-t border-[#D4CFC0]/50 mt-2 pt-2">
+                <a
+                  href="https://apps.shopify.com/moodscout"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 text-sm text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] py-2 px-2 rounded transition-colors font-medium w-full"
+                >
+                  <Store className="w-4 h-4" />
+                  <span>Shopify App</span>
+                  <ExternalLink className="w-3 h-3 opacity-50 ml-auto" />
+                </a>
+                <p className="text-xs text-[#5D5F60] px-2 pb-1 leading-relaxed">
+                  We built a widget for Shopify Store owners
+                </p>
+              </div>
 
               {/* Reward who sent you */}
               <button
@@ -461,6 +400,8 @@ export function Footer() {
               src={logo}
               alt="MoodScout Logo"
               className="w-6 h-6 sm:w-7 sm:h-7 object-contain"
+              width="28"
+              height="28"
             />
             <span className="text-base sm:text-lg font-bold text-[#1D1F20]">MoodScout</span>
           </Link>

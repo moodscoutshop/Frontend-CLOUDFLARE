@@ -417,7 +417,7 @@ export function LandingPage() {
             </div>
             
                         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-tight text-[#1D1F20]">
-              Transform Your
+              Transform Your{' '}
               <GradientText
                 colors={['#1D4AFF', '#AE27FF', '#F54E00', '#F9BD2B', '#AE27FF', '#1D4AFF']}
                 animationSpeed={6}
@@ -427,7 +427,7 @@ export function LandingPage() {
                 Pinterest Dreams
               </GradientText>
               <br className="hidden sm:block" />
-              <span className="sm:hidden"> </span>Into Reality
+              {' '}Into Reality
             </h1>
             
             <p className="text-base sm:text-lg md:text-xl text-[#5D5F60] mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4">
@@ -670,7 +670,7 @@ export function LandingPage() {
               {/* Marketplace Info */}
               <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <div className="flex items-center gap-3 bg-white border border-[#EB9D2A] rounded-md px-4 sm:px-5 py-1.5 shadow-sm">
-                  <img src={ebayLogo} alt="eBay" className="w-5 sm:w-6 h-5 sm:h-6 object-contain" />
+                  <img src={ebayLogo} alt="eBay" className="w-5 sm:w-6 h-5 sm:h-6 object-contain" width="24" height="24" />
                   <span className="text-xs sm:text-sm font-medium text-[#1D1F20]">Searching eBay</span>
                   <div className="w-4 sm:w-5 h-4 sm:h-5 bg-[#EB9D2A] rounded-md flex items-center justify-center">
                     <CheckCircle className="w-3 h-3 text-white" />
@@ -679,9 +679,9 @@ export function LandingPage() {
                 
                 <div className="flex items-center gap-3 bg-[#EEEFE9] border border-[#D4CFC0] rounded-md px-4 sm:px-5 py-1.5">
                   <div className="flex -space-x-2">
-                    <img src={amazonLogo} alt="Amazon" className="w-4 sm:w-5 h-4 sm:h-5 object-contain opacity-50" />
-                    <img src={targetLogo} alt="Target" className="w-4 sm:w-5 h-4 sm:h-5 object-contain opacity-50" />
-                    <img src={walmartLogo} alt="Walmart" className="w-4 sm:w-5 h-4 sm:h-5 object-contain opacity-50" />
+                    <img src={amazonLogo} alt="Amazon" className="w-4 sm:w-5 h-4 sm:h-5 object-contain opacity-50" width="20" height="20" />
+                    <img src={targetLogo} alt="Target" className="w-4 sm:w-5 h-4 sm:h-5 object-contain opacity-50" width="20" height="20" />
+                    <img src={walmartLogo} alt="Walmart" className="w-4 sm:w-5 h-4 sm:h-5 object-contain opacity-50" width="20" height="20" />
                   </div>
                   <span className="text-xs sm:text-sm text-[#5D5F60]">More coming soon</span>
                 </div>
@@ -768,6 +768,8 @@ export function LandingPage() {
                     alt={article.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
+                    width="800"
+                    height="450"
                   />
                   <div className="absolute top-4 left-4">
                     <span className="bg-[#EB9D2A] text-[#1D1F20] text-xs px-3 py-1 rounded-md font-medium border border-[#B17816]">

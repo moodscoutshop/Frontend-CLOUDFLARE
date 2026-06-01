@@ -6,7 +6,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Industrial Tech-Sleek Theme
+        // Industrial Tech-Sleek Themes
         cream: {
           50: '#FDFDF8',   // Main background
           100: '#F8F7F2',

@@ -13,7 +13,7 @@ import intersectingCircles from '../assets/intersecting-circles.svg';
 
 const LAST_UPDATED = 'April 13, 2026';
 const COMPANY_NAME = 'MoodScout';
-const CONTACT_NAME = 'Cameron Peltz';
+// const CONTACT_NAME = 'Cameron Peltz';
 const CONTACT_EMAIL = 'moodscoutshop@gmail.com';
 
 function PolicySection({ id, title, icon, children }) {
@@ -211,7 +211,6 @@ export function PrivacyPolicyPage() {
                   </p>
                   <p>
                     <strong>{COMPANY_NAME}</strong><br />
-                    Attn: {CONTACT_NAME}<br />
                     Email:{' '}
                     <a
                       href={`mailto:${CONTACT_EMAIL}`}
