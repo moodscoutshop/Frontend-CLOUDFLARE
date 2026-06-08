@@ -393,7 +393,19 @@ export function ResultsPage() {
         if (event.data) {
           const data = JSON.parse(event.data);
           console.error('❌ Error:', data);
-          alert(data.message || 'An error occurred during search.');
+          
+          let displayMessage = data.message || 'An error occurred during search.';
+          
+          // Fallback check if the backend didn't already transform it
+          if (displayMessage === 'EMPTY_RESULT') {
+            displayMessage = "We couldn't find any images on that Pinterest board.\n\n" +
+              "Please make sure:\n" +
+              "1. The URL is for a PUBLIC Pinterest Board (not a single pin or private board).\n" +
+              "2. The board contains at least one image.\n" +
+              "3. The URL looks like: pinterest.com/username/board-name/";
+          }
+          
+          alert(displayMessage);
         }
         setIsSearching(false);
         eventSource.close();
