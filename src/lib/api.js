@@ -7,7 +7,7 @@
 import axios from 'axios';
 import { auth } from './firebase';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -138,6 +138,88 @@ export const referralAPI = {
 
   // Profile (role info)
   getProfile: () => api.get('/api/referral/profile'),
+};
+
+export const shopifyAffiliateAPI = {
+  submitApplication: (data) => api.post('/api/shopify-affiliates/apply', data),
+  getApplications: () => api.get('/api/shopify-affiliates/applications'),
+  getDashboard: () => api.get('/api/shopify-affiliates/dashboard'),
+  getCode: () => api.get('/api/shopify-affiliates/code'),
+  setCode: (referralCode) => api.put('/api/shopify-affiliates/code', { referralCode }),
+};
+
+// ─── Bug / Crash Report API ───────────────────────────────────────
+export const reportAPI = {
+  // type: 'auto' | 'user'
+  submit: (payload) => api.post('/api/report', payload),
+};
+
+export const adminReportAPI = {
+  list: (token, { status, type } = {}) => api.get('/api/admin/reports', {
+    headers: { Authorization: `Admin ${token}` },
+    params: { ...(status ? { status } : {}), ...(type ? { type } : {}) },
+  }),
+  stats: (token) => api.get('/api/admin/reports/stats', { headers: { Authorization: `Admin ${token}` } }),
+  setStatus: (token, id, status) => api.patch(`/api/admin/reports/${id}`, { status }, { headers: { Authorization: `Admin ${token}` } }),
+  remove: (token, id) => api.delete(`/api/admin/reports/${id}`, { headers: { Authorization: `Admin ${token}` } }),
+  migrate: (token) => api.post('/api/admin/migrate-error-reports', {}, { headers: { Authorization: `Admin ${token}` } }),
+};
+
+// ─── Blog API (public) ────────────────────────────────────────────
+export const blogAPI = {
+  list: ({ limit = 20, offset = 0, featured } = {}) =>
+    api.get('/api/blog', { params: { limit, offset, ...(featured ? { featured: true } : {}) } }),
+  nav: () => api.get('/api/blog/nav'),
+  getBySlug: (slug) => api.get(`/api/blog/${encodeURIComponent(slug)}`),
+};
+
+// ─── Blog API (admin) ─────────────────────────────────────────────
+const adminHeaders = (token) => ({ headers: { Authorization: `Admin ${token}` } });
+export const adminBlogAPI = {
+  list: (token) => api.get('/api/admin/blog', adminHeaders(token)),
+  get: (token, id) => api.get(`/api/admin/blog/${id}`, adminHeaders(token)),
+  create: (token, data) => api.post('/api/admin/blog', data, adminHeaders(token)),
+  update: (token, id, data) => api.put(`/api/admin/blog/${id}`, data, adminHeaders(token)),
+  setStatus: (token, id, status) => api.patch(`/api/admin/blog/${id}/status`, { status }, adminHeaders(token)),
+  remove: (token, id) => api.delete(`/api/admin/blog/${id}`, adminHeaders(token)),
+  uploadImage: (token, file) => {
+    const form = new FormData();
+    form.append('image', file);
+    return api.post('/api/admin/blog/upload', form, {
+      headers: { Authorization: `Admin ${token}`, 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  migrate: (token) => api.post('/api/admin/migrate-blog', {}, adminHeaders(token)),
+};
+
+export const adminShopifyAffiliateAPI = {
+  getApplications: (token, status) => api.get('/api/admin/shopify-affiliates/applications', {
+    headers: { Authorization: `Admin ${token}` },
+    params: status ? { status } : {},
+  }),
+  reviewApplication: (token, id, status, adminNotes) => api.put(`/api/admin/shopify-affiliates/applications/${id}`, {
+    status,
+    adminNotes,
+  }, { headers: { Authorization: `Admin ${token}` } }),
+  getDevelopers: (token) => api.get('/api/admin/shopify-affiliates/developers', {
+    headers: { Authorization: `Admin ${token}` },
+  }),
+  updateCommission: (token, userId, commissionRate) => api.put(`/api/admin/shopify-affiliates/developers/${userId}/commission`, {
+    commissionRate,
+  }, { headers: { Authorization: `Admin ${token}` } }),
+  getAttributions: (token) => api.get('/api/admin/shopify-affiliates/attributions', {
+    headers: { Authorization: `Admin ${token}` },
+  }),
+  updateAttribution: (token, shopDomain, referralCode, plan = 'pro') => api.put(`/api/admin/shopify-affiliates/attributions/${encodeURIComponent(shopDomain)}`, {
+    referralCode,
+    plan,
+  }, { headers: { Authorization: `Admin ${token}` } }),
+  getLedger: (token) => api.get('/api/admin/shopify-affiliates/ledger', {
+    headers: { Authorization: `Admin ${token}` },
+  }),
+  addManualLedger: (token, data) => api.post('/api/admin/shopify-affiliates/ledger/manual', data, {
+    headers: { Authorization: `Admin ${token}` },
+  }),
 };
 
 

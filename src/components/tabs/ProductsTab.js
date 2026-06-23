@@ -618,8 +618,8 @@ export function ProductsTab({ onReSearchFromKeywords }) {
     openReferralModal(url, title);
   };
 
-  // AI analysis collapsible state
-  const [showAnalysis, setShowAnalysis] = useState(true);
+  // AI analysis collapsible state — collapsed by default
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const isReSearching = isSearching && reSearchSource === 'keywords';
   const analysisLoading = tabStates.analysis?.loading || (isSearching && progressData.phase === 'analysis');
 

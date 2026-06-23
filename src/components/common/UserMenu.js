@@ -10,11 +10,11 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ChevronDown, LogOut, Settings, Sparkles } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, Sparkles, Store } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export function UserMenu({ onSettingsClick }) {
-  const { currentUser, logout, dbUser } = useAuth();
+  const { currentUser, logout, dbUser, isShopifyDeveloper } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -108,6 +108,18 @@ export function UserMenu({ onSettingsClick }) {
             >
               <Sparkles className="w-4 h-4" />
               Influencer Dashboard
+            </Link>
+          )}
+
+          {/* Developer Affiliate Dashboard (visible to approved developer affiliates) */}
+          {(isShopifyDeveloper || dbUser?.role === 'admin') && (
+            <Link
+              to="/developer/dashboard"
+              onClick={() => setIsOpen(false)}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors text-left font-medium"
+            >
+              <Store className="w-4 h-4" />
+              Developer Dashboard
             </Link>
           )}
 

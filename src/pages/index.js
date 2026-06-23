@@ -5,4 +5,7 @@ export { SignupPage } from './SignupPage';
 export { AdminLoginPage } from './AdminLoginPage';
 export { AdminDashboard } from './AdminDashboard';
 export { CreatorDashboard } from './CreatorDashboard';
+export { ShopifyDeveloperDashboard } from './ShopifyDeveloperDashboard';
 export { PrivacyPolicyPage } from './PrivacyPolicyPage';
+export { BlogListPage } from './BlogListPage';
+export { BlogPostPage } from './BlogPostPage';

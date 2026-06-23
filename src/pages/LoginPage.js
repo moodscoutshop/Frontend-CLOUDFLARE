@@ -44,8 +44,9 @@ export function LoginPage() {
       await googleLogin();
       navigate('/app');
     } catch (err) {
+      console.error('❌ Google login component error:', err);
       if (err.code !== 'auth/popup-closed-by-user') {
-        setError('Google login failed. Please try again.');
+        setError(`Google login failed: ${err.message || 'Please try again.'}`);
       }
     } finally {
       setLoading(false);

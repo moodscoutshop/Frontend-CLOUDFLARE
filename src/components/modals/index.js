@@ -5,4 +5,5 @@ export { VisualSearchModal } from './VisualSearchModal';
 export { ReferralCodeModal } from './ReferralCodeModal';
 export { SettingsModal } from './SettingsModal';
 export { CreatorApplicationModal } from './CreatorApplicationModal';
+export { DeveloperAffiliateApplicationModal } from './DeveloperAffiliateApplicationModal';
 export { PrecisionSearchAuthModal } from './PrecisionSearchAuthModal';

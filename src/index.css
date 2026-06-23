@@ -3,6 +3,79 @@
 @tailwind utilities;
 
 /* ============================================
+   BLOG TIPTAP EDITOR
+   ============================================ */
+.blog-editor-content .ProseMirror {
+  min-height: 780px;
+  outline: none;
+}
+.blog-editor-content .ProseMirror img {
+  border-radius: 0.75rem;
+  max-width: 100%;
+  height: auto;
+}
+.blog-editor-content .ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1.5rem 0;
+  overflow: hidden;
+}
+.blog-editor-content .ProseMirror td,
+.blog-editor-content .ProseMirror th {
+  border: 1px solid #D4CFC0;
+  box-sizing: border-box;
+  min-width: 1em;
+  padding: 0.6rem 0.75rem;
+  position: relative;
+  vertical-align: top;
+}
+.blog-editor-content .ProseMirror th {
+  background: #F8F7F2;
+  font-weight: 700;
+}
+.blog-editor-content .ProseMirror .selectedCell::after {
+  background: rgba(235, 157, 42, 0.16);
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+.blog-editor-content .ProseMirror .column-resize-handle {
+  background-color: #EB9D2A;
+  bottom: -2px;
+  pointer-events: none;
+  position: absolute;
+  right: -2px;
+  top: 0;
+  width: 4px;
+}
+.docx-editor-viewport {
+  scrollbar-gutter: stable;
+}
+.docx-editor-viewport::-webkit-scrollbar {
+  width: 10px;
+}
+.docx-editor-viewport::-webkit-scrollbar-thumb {
+  background: rgba(29, 31, 32, 0.35);
+  border-radius: 999px;
+}
+.docx-editor-page {
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+.blog-editor-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+/* ============================================
    INDUSTRIAL TECH-SLEEK THEME
    ============================================ */
 

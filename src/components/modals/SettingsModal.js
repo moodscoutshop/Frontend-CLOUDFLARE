@@ -10,12 +10,14 @@
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import {
   X, Tag, Settings, Bell, Sparkles, Check, AlertCircle,
   ChevronRight, Loader2, Copy, Clock, Shield, AlertTriangle, CheckCircle,
+  Store, ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { referralAPI } from '../../lib/api';
+import { referralAPI, shopifyAffiliateAPI } from '../../lib/api';
 
 export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralCode = null }) {
   const { currentUser, dbUser, isAuthenticated } = useAuth();
@@ -42,6 +44,14 @@ export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralC
   // Applications
   const [applications, setApplications] = useState([]);
   const [appsLoading, setAppsLoading] = useState(false);
+
+  // Shopify Developer Affiliate
+  const [devLoading, setDevLoading] = useState(false);
+  const [devApplications, setDevApplications] = useState([]);
+  const [devCode, setDevCode] = useState(null);
+  const [devCodeInput, setDevCodeInput] = useState('');
+  const [devCodeSaving, setDevCodeSaving] = useState(false);
+  const [devCodeMessage, setDevCodeMessage] = useState(null);
 
   // Notifications
   const [notifications, setNotifications] = useState([]);
@@ -70,9 +80,12 @@ export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralC
       // Clear verification state on open
       setCodeVerifyStatus(null);
 
+      setDevCodeMessage(null);
+
       if (isAuthenticated) {
         loadProfile();
         loadNotifications();
+        loadDeveloperData();
       }
     } else {
       document.body.style.overflow = 'unset';
@@ -125,6 +138,23 @@ export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralC
       // Silent
     } finally {
       setProfileLoading(false);
+    }
+  }, []);
+
+  const loadDeveloperData = useCallback(async () => {
+    setDevLoading(true);
+    try {
+      const res = await shopifyAffiliateAPI.getDashboard();
+      const dash = res.data?.dashboard || {};
+      setDevApplications(dash.applications || []);
+      setDevCode(dash.code || null);
+      setDevCodeInput(dash.code?.referral_code || '');
+    } catch {
+      // Silent — keep the tab usable even if the dashboard API fails
+      setDevApplications([]);
+      setDevCode(null);
+    } finally {
+      setDevLoading(false);
     }
   }, []);
 
@@ -182,6 +212,22 @@ export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralC
     }
   };
 
+  const handleSaveDeveloperCode = async () => {
+    setDevCodeSaving(true);
+    setDevCodeMessage(null);
+    try {
+      const res = await shopifyAffiliateAPI.setCode(devCodeInput);
+      setDevCode(res.data?.code || null);
+      setDevCodeMessage({ type: 'success', text: 'Developer referral code saved!' });
+      loadDeveloperData();
+    } catch (err) {
+      setDevCodeMessage({ type: 'error', text: err.response?.data?.error || 'Failed to save' });
+    } finally {
+      setDevCodeSaving(false);
+      setTimeout(() => setDevCodeMessage(null), 5000);
+    }
+  };
+
   const handleMarkAllRead = async () => {
     try {
       await referralAPI.markNotificationsRead();
@@ -193,10 +239,14 @@ export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralC
   const isCreator = profile?.role === 'creator';
   const hasPendingApplication = applications.some(a => a.status === 'pending');
 
+  const isDeveloperApproved = devApplications.some(a => a.status === 'approved');
+  const hasPendingDevApplication = devApplications.some(a => a.status === 'pending');
+
   const tabs = [
     { id: 'referral', label: 'Referral Code', icon: <Tag className="w-4 h-4" /> },
     ...(isAuthenticated ? [
       { id: 'creator', label: 'Influencer Program', icon: <Sparkles className="w-4 h-4" /> },
+      { id: 'developer', label: 'Developer Affiliate', icon: <Store className="w-4 h-4" /> },
       { id: 'notifications', label: `Notifications${unreadCount ? ` (${unreadCount})` : ''}`, icon: <Bell className="w-4 h-4" /> },
     ] : []),
   ];
@@ -397,6 +447,83 @@ export function SettingsModal({ isOpen, onClose, referralCode, onUpdateReferralC
             </div>
           )}
 
+          {/* ─── Developer Affiliate Tab ─── */}
+          {activeTab === 'developer' && (
+            <div className="space-y-4">
+              {devLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#EB9D2A]" />
+                </div>
+              ) : isDeveloperApproved ? (
+                /* ── Approved developer affiliate ── */
+                <DeveloperCodeSection
+                  devCode={devCode}
+                  devCodeInput={devCodeInput}
+                  setDevCodeInput={setDevCodeInput}
+                  onSave={handleSaveDeveloperCode}
+                  saving={devCodeSaving}
+                  message={devCodeMessage}
+                  onClose={onClose}
+                />
+              ) : (
+                /* ── Not an approved developer affiliate yet ── */
+                <div className="space-y-4">
+                  <div className="p-4 bg-[#EB9D2A]/5 rounded-xl border border-[#EB9D2A]/20">
+                    <h4 className="font-semibold text-[#1D1F20] mb-1 flex items-center gap-2">
+                      <Store className="w-4 h-4 text-[#EB9D2A]" /> Become a Developer Affiliate
+                    </h4>
+                    <p className="text-sm text-[#5D5F60] leading-relaxed">
+                      Refer Shopify merchants to the MoodScout app and earn recurring commission on
+                      their subscriptions. This is separate from the eBay influencer program.
+                    </p>
+                  </div>
+
+                  {hasPendingDevApplication ? (
+                    <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
+                      <Clock className="w-4 h-4" />
+                      Your developer affiliate application is under review. We'll notify you when it's processed.
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        onClose();
+                        window.dispatchEvent(new CustomEvent('open-developer-application'));
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-white border border-[#D4CFC0] rounded-lg
+                                 hover:border-[#EB9D2A]/50 hover:bg-[#EB9D2A]/5 transition-all text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Store className="w-5 h-5 text-[#EB9D2A]" />
+                        <div>
+                          <div className="text-sm font-medium text-[#1D1F20]">Apply for Developer Affiliate Program</div>
+                          <div className="text-xs text-[#5D5F60]">Get a Shopify referral code & earn recurring commission</div>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-[#5D5F60]" />
+                    </button>
+                  )}
+
+                  {/* Previous applications */}
+                  {devApplications.filter(a => a.status !== 'pending').length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-semibold text-[#5D5F60] uppercase tracking-wide">Previous Applications</h4>
+                      {devApplications.filter(a => a.status !== 'pending').map(app => (
+                        <div key={app.id} className={`p-3 rounded-lg text-sm border ${
+                          app.status === 'approved' ? 'bg-green-50 border-green-200 text-green-700'
+                          : 'bg-red-50 border-red-200 text-red-700'
+                        }`}>
+                          <div className="font-medium capitalize">{app.status}</div>
+                          <div className="text-xs mt-0.5">{new Date(app.reviewed_at || app.created_at).toLocaleDateString()}</div>
+                          {app.admin_notes && <div className="text-xs mt-1 opacity-80">{app.admin_notes}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ─── Notifications Tab ─── */}
           {activeTab === 'notifications' && (
             <div className="space-y-3">
@@ -581,6 +708,141 @@ function CreatorCodeSection({ creatorCode, cooldownDays = 90, creatorCodeInput, 
           {message.text}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Developer Code Section — shown when user is an approved Shopify developer affiliate
+ */
+function DeveloperCodeSection({ devCode, devCodeInput, setDevCodeInput, onSave, saving, message, onClose }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(devCode?.referral_code || '');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
+        <Shield className="w-5 h-5 text-green-600" />
+        <div>
+          <div className="text-sm font-medium text-green-700">Developer Affiliate Account</div>
+          <div className="text-xs text-green-600">Manage your Shopify subscription referral code</div>
+        </div>
+      </div>
+
+      {devCode?.referral_code ? (
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-[#1D1F20]">Your Developer Referral Code</label>
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-[#EEEFE9] border border-[#D4CFC0] rounded-lg">
+                <Store className="w-4 h-4 text-[#EB9D2A]" />
+                <span className="text-sm font-mono font-semibold text-[#1D1F20]">{devCode.referral_code}</span>
+              </div>
+              <button
+                onClick={handleCopy}
+                className="px-3 py-2.5 rounded-lg border border-[#D4CFC0] bg-white text-sm text-[#5D5F60]
+                           hover:bg-[#EEEFE9] transition-all flex items-center gap-1.5"
+              >
+                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-[#1D1F20]">Change Referral Code</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={devCodeInput}
+                onChange={(e) => setDevCodeInput(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                placeholder="my-code"
+                maxLength={50}
+                className="flex-1 px-4 py-2.5 bg-white border border-[#D4CFC0] rounded-lg text-sm font-mono text-[#1D1F20]
+                           placeholder:text-[#A0A2A3]
+                           focus:outline-none focus:ring-2 focus:ring-[#EB9D2A]/40 focus:border-[#EB9D2A]
+                           transition-all"
+              />
+              <button
+                onClick={onSave}
+                disabled={saving || !devCodeInput || devCodeInput === devCode?.referral_code}
+                className="px-4 py-2.5 rounded-lg bg-[#EB9D2A] text-[#1D1F20] text-sm font-semibold
+                           hover:bg-[#CD8407] disabled:opacity-50 disabled:cursor-not-allowed
+                           active:scale-[0.98] transition-all flex items-center gap-1.5"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                Save
+              </button>
+            </div>
+            <p className="text-[11px] text-[#A0A2A3]">
+              Only lowercase letters, numbers, hyphens, and underscores. 3-50 characters.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-[#3D3F40]">
+            Create your unique Shopify developer referral code. Merchants can enter this code before
+            upgrading in the MoodScout Shopify app to credit you.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={devCodeInput}
+              onChange={(e) => setDevCodeInput(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+              placeholder="my-unique-code"
+              maxLength={50}
+              className="flex-1 px-4 py-2.5 bg-white border border-[#D4CFC0] rounded-lg text-sm font-mono text-[#1D1F20]
+                         placeholder:text-[#A0A2A3]
+                         focus:outline-none focus:ring-2 focus:ring-[#EB9D2A]/40 focus:border-[#EB9D2A]
+                         transition-all"
+            />
+            <button
+              onClick={onSave}
+              disabled={saving || !devCodeInput}
+              className="px-4 py-2.5 rounded-lg bg-[#EB9D2A] text-[#1D1F20] text-sm font-semibold
+                         hover:bg-[#CD8407] disabled:opacity-50 disabled:cursor-not-allowed
+                         active:scale-[0.98] transition-all flex items-center gap-1.5"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              Create
+            </button>
+          </div>
+          <p className="text-[11px] text-[#A0A2A3]">
+            Only lowercase letters, numbers, hyphens, and underscores. 3-50 characters.
+          </p>
+        </div>
+      )}
+
+      {message && (
+        <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
+          message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+        }`}>
+          {message.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          {message.text}
+        </div>
+      )}
+
+      <Link
+        to="/developer/dashboard"
+        onClick={() => onClose?.()}
+        className="w-full flex items-center justify-between px-4 py-3 bg-white border border-[#D4CFC0] rounded-lg
+                   hover:border-[#EB9D2A]/50 hover:bg-[#EB9D2A]/5 transition-all text-left"
+      >
+        <div className="flex items-center gap-3">
+          <Store className="w-5 h-5 text-[#EB9D2A]" />
+          <div>
+            <div className="text-sm font-medium text-[#1D1F20]">Open Developer Dashboard</div>
+            <div className="text-xs text-[#5D5F60]">View attributed shops, commission & analytics</div>
+          </div>
+        </div>
+        <ExternalLink className="w-4 h-4 text-[#5D5F60]" />
+      </Link>
     </div>
   );
 }

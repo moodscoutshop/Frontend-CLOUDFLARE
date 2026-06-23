@@ -8,9 +8,11 @@ import { useSearch } from '../context/SearchContext';
 import { usePattern } from '../context/PatternContext';
 import { useAuth } from '../context/AuthContext';
 import { Navbar, Footer } from '../components/layout';
-import { WaitlistModal, ArticleModal, VisualSearchModal, PrecisionSearchAuthModal } from '../components/modals';
+import { WaitlistModal, VisualSearchModal, PrecisionSearchAuthModal } from '../components/modals';
 import { SpotlightCard, GradientText, Stack, ScrollToTopButton } from '../components/common';
 import { PrecisionSearchToggle } from '../components/common/PrecisionSearchToggle';
+import { blogAPI } from '../lib/api';
+import debug from '../lib/debug';
 
 // Pattern imports
 import morphingDiamonds from '../assets/morphing-diamonds.svg';
@@ -35,10 +37,24 @@ export function LandingPage() {
   const { currentUser } = useAuth();
 
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
-  const [showArticleModal, setShowArticleModal] = useState(false);
   const [showVisualSearchModal, setShowVisualSearchModal] = useState(false);
   const [showPrecisionAuthModal, setShowPrecisionAuthModal] = useState(false);
-  const [selectedArticle, setSelectedArticle] = useState(null);
+
+  // Latest published blog posts (preview on landing page)
+  const [blogPosts, setBlogPosts] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await blogAPI.list({ limit: 3 });
+        if (active) setBlogPosts(res.data.posts || []);
+      } catch (err) {
+        debug.error('Failed to load blog preview:', err);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   // Gate: only allow enabling precision search when logged in
   const handlePrecisionChange = (newValue) => {
@@ -230,46 +246,6 @@ export function LandingPage() {
     { id: 'etsy', name: 'Etsy', logo: etsyLogo, available: false }
   ];
   
-  // Articles data
-  const articles = [
-    {
-      id: 1,
-      title: "10 Hidden Gems on eBay You Need to Know About",
-      excerpt: "Discover the secret categories and search techniques that reveal eBay's most unique treasures.",
-      content: "eBay is home to millions of listings, but the real treasures are often hidden in plain sight. In this guide, we'll explore unconventional search strategies, lesser-known categories, and expert tips for finding one-of-a-kind items that match your aesthetic.",
-      image: "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=800&h=600&fit=crop",
-      author: "Sarah Mitchell",
-      date: "January 5, 2025",
-      readTime: "5 min read",
-      category: "Shopping Tips",
-      tags: ["eBay", "Shopping", "Deals"]
-    },
-    {
-      id: 2,
-      title: "How to Score Designer Items at 70% Off on eBay",
-      excerpt: "Master the art of finding authentic luxury goods at unbeatable prices with these proven strategies.",
-      content: "Shopping for designer items on eBay can save you thousands, but it requires knowledge and strategy. This comprehensive guide covers authentication tips, timing your purchases for maximum savings, and understanding seller ratings.",
-      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop",
-      author: "Marcus Chen",
-      date: "December 28, 2024",
-      readTime: "7 min read",
-      category: "Luxury Shopping",
-      tags: ["Designer", "Luxury", "Deals"]
-    },
-    {
-      id: 3,
-      title: "eBay vs. Other Marketplaces: Why eBay Wins for Unique Finds",
-      excerpt: "Compare eBay with other online marketplaces and discover why it's the go-to platform for distinctive items.",
-      content: "In the crowded world of online marketplaces, eBay stands out for several key reasons. This article breaks down the advantages of eBay's auction system, its vast selection of vintage and rare items, and buyer protection policies.",
-      image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=600&fit=crop",
-      author: "Emily Rodriguez",
-      date: "December 20, 2024",
-      readTime: "6 min read",
-      category: "Marketplace Comparison",
-      tags: ["eBay", "Shopping", "Comparison"]
-    }
-  ];
-  
   const features = [
     {
       icon: <Search className="w-8 h-8" />,
@@ -314,9 +290,8 @@ export function LandingPage() {
     navigate('/results', { state: { imageFiles, precisionSearch } });
   };
   
-  const handleArticleClick = (article) => {
-    setSelectedArticle(article);
-    setShowArticleModal(true);
+  const handleArticleClick = (post) => {
+    navigate(`/blog/${post.slug}`);
   };
 
   // Get current pattern from context
@@ -382,16 +357,6 @@ export function LandingPage() {
       <WaitlistModal 
         isOpen={showWaitlistModal} 
         onClose={() => setShowWaitlistModal(false)} 
-      />
-      
-      {/* Article Modal */}
-      <ArticleModal
-        article={selectedArticle}
-        isOpen={showArticleModal}
-        onClose={() => {
-          setShowArticleModal(false);
-          setSelectedArticle(null);
-        }}
       />
       
       <VisualSearchModal
@@ -748,6 +713,7 @@ export function LandingPage() {
       </section>
       
       {/* Blog Section */}
+      {blogPosts.length > 0 && (
       <section id="blog" className="py-16 sm:py-20 px-4 sm:px-6 bg-[#EEEFE9]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12 sm:mb-16">
@@ -756,53 +722,61 @@ export function LandingPage() {
           </div>
           
           <div className="grid md:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
-            {articles.map((article) => (
+            {blogPosts.map((post) => (
               <article
-                key={article.id}
-                onClick={() => handleArticleClick(article)}
-                className="group bg-white rounded-lg overflow-hidden border border-[#E0DCCE] hover:border-[#EB9D2A] hover:-translate-y-1 hover:shadow-lg transition-all cursor-pointer"
+                key={post.id}
+                onClick={() => handleArticleClick(post)}
+                className="group bg-white rounded-lg overflow-hidden border border-[#E0DCCE] hover:border-[#EB9D2A] hover:-translate-y-1 hover:shadow-lg transition-all cursor-pointer flex flex-col"
               >
                 <div className="aspect-video relative overflow-hidden bg-[#EEEFE9]">
-                  <img
-                    src={article.image}
-                    alt={article.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                    width="800"
-                    height="450"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-[#EB9D2A] text-[#1D1F20] text-xs px-3 py-1 rounded-md font-medium border border-[#B17816]">
-                      {article.category}
-                    </span>
-                  </div>
+                  {post.cover_image ? (
+                    <img
+                      src={post.cover_image}
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                      width="800"
+                      height="450"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[#C5BFAE]">
+                      <Sparkles className="w-10 h-10" />
+                    </div>
+                  )}
+                  {post.category && (
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-[#EB9D2A] text-[#1D1F20] text-xs px-3 py-1 rounded-md font-medium border border-[#B17816]">
+                        {post.category}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 
-                <div className="p-4 sm:p-6">
+                <div className="p-4 sm:p-6 flex flex-col flex-1">
                   <div className="flex items-center gap-2 sm:gap-3 text-xs text-[#5D5F60] mb-2 sm:mb-3">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      <span>{article.date}</span>
+                      <span>{post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}</span>
                     </div>
                     <span>•</span>
                     <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      <span>{article.readTime}</span>
+                      <span>{post.read_time || 1} min read</span>
                     </div>
                   </div>
                   
                   <h3 className="text-lg sm:text-xl font-bold text-[#1D1F20] mb-2 sm:mb-3 group-hover:text-[#EB9D2A] transition-colors line-clamp-2">
-                    {article.title}
+                    {post.title}
                   </h3>
                   
-                  <p className="text-[#5D5F60] text-sm leading-relaxed mb-4 line-clamp-3">
-                    {article.excerpt}
+                  <p className="text-[#5D5F60] text-sm leading-relaxed mb-4 line-clamp-3 flex-1">
+                    {post.excerpt || post.caption}
                   </p>
                   
-                  <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-[#E0DCCE]">
+                  <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-[#E0DCCE] mt-auto">
                     <div className="flex items-center gap-2 text-sm text-[#5D5F60]">
                       <User className="w-4 h-4" />
-                      <span>{article.author}</span>
+                      <span>{post.author || 'MoodScout'}</span>
                     </div>
                     <div className="flex items-center gap-1 text-[#EB9D2A] text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                       <span>Read More</span>
@@ -815,13 +789,14 @@ export function LandingPage() {
           </div>
           
           <div className="text-center">
-            <button className="btn-primary inline-flex items-center gap-2">
+            <button onClick={() => navigate('/blog')} className="btn-primary inline-flex items-center gap-2">
               View All Articles
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       </section>
+      )}
       
       {/* CTA Section */}
       <section className="py-16 sm:py-20 px-4 sm:px-6 bg-[#FDFDF8]">

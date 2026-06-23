@@ -11,10 +11,13 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { SearchProvider } from './context/SearchContext';
 import { PatternProvider } from './context/PatternContext';
 import { AuthProvider } from './context/AuthContext';
 import { AppLayout } from './components/layout';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { BugReportButton } from './components/common/BugReportButton';
 import {
   LandingPage,
   ResultsPage,
@@ -23,7 +26,10 @@ import {
   AdminLoginPage,
   AdminDashboard,
   CreatorDashboard,
+  ShopifyDeveloperDashboard,
   PrivacyPolicyPage,
+  BlogListPage,
+  BlogPostPage,
 } from './pages';
 
 /**
@@ -35,43 +41,53 @@ import {
  */
 export default function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <SearchProvider>
-          <PatternProvider>
-            <Routes>
-              {/* ─── Existing routes (UNCHANGED) ─── */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/results" element={
-                <AppLayout><ResultsPage /></AppLayout>
-              } />
+    <HelmetProvider>
+      <Router>
+        <AuthProvider>
+          <SearchProvider>
+            <PatternProvider>
+              <ErrorBoundary>
+                <Routes>
+                  {/* ─── Existing routes (UNCHANGED) ─── */}
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/results" element={
+                    <AppLayout><ResultsPage /></AppLayout>
+                  } />
 
-              {/* ─── Auth routes ─── */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
+                  {/* ─── Auth routes ─── */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignupPage />} />
 
-              {/* ─── Authenticated app route (shows sidebar if logged in) ─── */}
-              <Route path="/app" element={
-                <AppLayout><LandingPage /></AppLayout>
-              } />
+                  {/* ─── Authenticated app route (shows sidebar if logged in) ─── */}
+                  <Route path="/app" element={
+                    <AppLayout><LandingPage /></AppLayout>
+                  } />
 
-              {/* ─── Admin routes (separate auth system) ─── */}
-              <Route path="/dev" element={<AdminLoginPage />} />
-              <Route path="/dev/dashboard" element={<AdminDashboard />} />
+                  {/* ─── Blog ─── */}
+                  <Route path="/blog" element={<BlogListPage />} />
+                  <Route path="/blog/:slug" element={<BlogPostPage />} />
 
-              {/* ─── Creator dashboard (requires creator role) ─── */}
-              <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+                  {/* ─── Admin routes (separate auth system) ─── */}
+                  <Route path="/dev" element={<AdminLoginPage />} />
+                  <Route path="/dev/dashboard" element={<AdminDashboard />} />
 
-              {/* ─── Public legal route for Shopify listing compliance ─── */}
-              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                  {/* ─── Creator dashboard (requires creator role) ─── */}
+                  <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+                  <Route path="/developer/dashboard" element={<ShopifyDeveloperDashboard />} />
 
-              {/* Fallback to landing page for unknown routes */}
-              <Route path="*" element={<LandingPage />} />
-            </Routes>
-          </PatternProvider>
-        </SearchProvider>
-      </AuthProvider>
-    </Router>
+                  {/* ─── Public legal route for Shopify listing compliance ─── */}
+                  <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+
+                  {/* Fallback to landing page for unknown routes */}
+                  <Route path="*" element={<LandingPage />} />
+                </Routes>
+                <BugReportButton />
+              </ErrorBoundary>
+            </PatternProvider>
+          </SearchProvider>
+        </AuthProvider>
+      </Router>
+    </HelmetProvider>
   );
 }
 

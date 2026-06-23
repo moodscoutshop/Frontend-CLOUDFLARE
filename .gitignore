@@ -1,4 +1,4 @@
-# Node dependencies
+## Node dependencies
 node_modules/
 
 # Build output (Vite/Next/React)
@@ -27,5 +27,3 @@ Thumbs.db
 # Cache files
 .cache/
 .next/
-
-.env

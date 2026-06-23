@@ -20,7 +20,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
-import { authAPI } from '../lib/api';
+import { authAPI, shopifyAffiliateAPI } from '../lib/api';
 
 const AuthContext = createContext(null);
 
@@ -28,6 +28,8 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [dbUser, setDbUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // True when the signed-in user has an approved Shopify developer affiliate application
+  const [isShopifyDeveloper, setIsShopifyDeveloper] = useState(false);
 
   // Sync user to PostgreSQL after Firebase auth
   const syncUserToDb = useCallback(async (firebaseUser) => {
@@ -44,20 +46,40 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Refresh approved Shopify developer affiliate status (separate from eBay creator role)
+  const refreshShopifyDeveloperStatus = useCallback(async () => {
+    try {
+      const res = await shopifyAffiliateAPI.getApplications();
+      const approved = (res.data?.applications || []).some((a) => a.status === 'approved');
+      setIsShopifyDeveloper(approved);
+    } catch {
+      setIsShopifyDeveloper(false);
+    }
+  }, []);
+
   // Listen for Firebase auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
         await syncUserToDb(user);
+        refreshShopifyDeveloperStatus();
       } else {
         setDbUser(null);
+        setIsShopifyDeveloper(false);
       }
       setLoading(false);
     });
 
     return unsubscribe;
-  }, [syncUserToDb]);
+  }, [syncUserToDb, refreshShopifyDeveloperStatus]);
+
+  // Allow other components to trigger a status refresh after applying/approval changes
+  useEffect(() => {
+    const handler = () => refreshShopifyDeveloperStatus();
+    window.addEventListener('moodscout:developer-status-updated', handler);
+    return () => window.removeEventListener('moodscout:developer-status-updated', handler);
+  }, [refreshShopifyDeveloperStatus]);
 
   // ─── Auth Functions ─────────────────────────────────────────────
 
@@ -75,14 +97,24 @@ export function AuthProvider({ children }) {
   }, []);
 
   const googleLogin = useCallback(async () => {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
+    console.log('🔐 Google login initiated...');
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('✅ Google login successful:', result.user.email);
+      return result.user;
+    } catch (error) {
+      console.error('❌ Google login error in AuthContext:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      throw error;
+    }
   }, []);
 
   const logout = useCallback(async () => {
     await signOut(auth);
     setCurrentUser(null);
     setDbUser(null);
+    setIsShopifyDeveloper(false);
   }, []);
 
   const value = {
@@ -94,6 +126,8 @@ export function AuthProvider({ children }) {
     googleLogin,
     logout,
     isAuthenticated: !!currentUser,
+    isShopifyDeveloper,
+    refreshShopifyDeveloperStatus,
   };
 
   return (

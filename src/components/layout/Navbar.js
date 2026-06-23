@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { UserMenu } from '../common/UserMenu';
 import { SettingsModal } from '../modals/SettingsModal';
 import { CreatorApplicationModal } from '../modals/CreatorApplicationModal';
+import { DeveloperAffiliateApplicationModal } from '../modals/DeveloperAffiliateApplicationModal';
 
 /**
  * ShopifyAppButton - Link button to MoodScout Shopify App Store page
@@ -47,9 +48,10 @@ export function Navbar({ onFeedbackClick }) {
   const navDropdownRef = useRef(null);
   const actionsDropdownRef = useRef(null);
   const location = useLocation();
-  const { currentUser, isAuthenticated, logout, dbUser } = useAuth();
+  const { currentUser, isAuthenticated, logout, dbUser, isShopifyDeveloper } = useAuth();
   const [showSettings, setShowSettings] = useState(false);
   const [showCreatorApp, setShowCreatorApp] = useState(false);
+  const [showDeveloperApp, setShowDeveloperApp] = useState(false);
 
   // Close medium-screen dropdowns on outside click
   useEffect(() => {
@@ -66,6 +68,13 @@ export function Navbar({ onFeedbackClick }) {
     const handler = () => setShowCreatorApp(true);
     window.addEventListener('open-creator-application', handler);
     return () => window.removeEventListener('open-creator-application', handler);
+  }, []);
+
+  // Listen for DeveloperAffiliateApplicationModal open event from SettingsModal
+  useEffect(() => {
+    const handler = () => setShowDeveloperApp(true);
+    window.addEventListener('open-developer-application', handler);
+    return () => window.removeEventListener('open-developer-application', handler);
   }, []);
   
   useEffect(() => {
@@ -115,12 +124,12 @@ export function Navbar({ onFeedbackClick }) {
             >
               Features
             </a>
-            <a 
-              href="#blog" 
+            <Link
+              to="/blog"
               className="text-sm text-[#3D3F40] hover:text-[#EB9D2A] transition-colors font-medium px-2 py-1 rounded hover:bg-[#EEEFE9]"
             >
               Blog
-            </a>
+            </Link>
             <ShopifyAppButton />
             {/* Reward who sent you */}
             <button
@@ -167,8 +176,8 @@ export function Navbar({ onFeedbackClick }) {
                     className="block px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">How It Works</a>
                   <a href="#features" onClick={() => setNavDropdownOpen(false)}
                     className="block px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">Features</a>
-                  <a href="#blog" onClick={() => setNavDropdownOpen(false)}
-                    className="block px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">Blog</a>
+                  <Link to="/blog" onClick={() => setNavDropdownOpen(false)}
+                    className="block px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">Blog</Link>
                   <div className="border-t border-[#E0DCCE] my-1" />
                   <a
                     href="https://apps.shopify.com/moodscout"
@@ -230,6 +239,12 @@ export function Navbar({ onFeedbackClick }) {
                           Influencer Dashboard
                         </Link>
                       )}
+                      {(isShopifyDeveloper || dbUser?.role === 'admin') && (
+                        <Link to="/developer/dashboard" onClick={() => setActionsDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">
+                          <Store className="w-4 h-4" /> Developer Dashboard
+                        </Link>
+                      )}
                       <div className="border-t border-[#E0DCCE] my-1" />
                       <button onClick={() => { setActionsDropdownOpen(false); onFeedbackClick?.(); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] hover:text-[#EB9D2A] transition-colors">
@@ -288,13 +303,13 @@ export function Navbar({ onFeedbackClick }) {
               >
                 Features
               </a>
-              <a
-                href="#blog"
+              <Link
+                to="/blog"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-sm text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] py-2 px-2 rounded transition-colors font-medium"
               >
                 Blog
-              </a>
+              </Link>
               
               {/* Shopify App link */}
               <div className="border-t border-[#D4CFC0]/50 mt-2 pt-2">
@@ -347,6 +362,16 @@ export function Navbar({ onFeedbackClick }) {
                     <Settings className="w-4 h-4" />
                     Settings
                   </button>
+                  {(isShopifyDeveloper || dbUser?.role === 'admin') && (
+                    <Link
+                      to="/developer/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-sm text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] py-2 px-2 rounded transition-colors font-medium text-left flex items-center gap-2"
+                    >
+                      <Store className="w-4 h-4" />
+                      Developer Dashboard
+                    </Link>
+                  )}
                   <button
                     onClick={() => { setMobileMenuOpen(false); logout(); }}
                     className="text-sm text-[#5D5F60] hover:text-red-500 hover:bg-[#EEEFE9] py-2 px-2 rounded transition-colors font-medium text-left"
@@ -382,6 +407,7 @@ export function Navbar({ onFeedbackClick }) {
       {/* Modals */}
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
       <CreatorApplicationModal isOpen={showCreatorApp} onClose={() => setShowCreatorApp(false)} />
+      <DeveloperAffiliateApplicationModal isOpen={showDeveloperApp} onClose={() => setShowDeveloperApp(false)} />
     </nav>
   );
 }

@@ -16,5 +16,6 @@ export { ReSearchButton } from './ReSearchButton';
 export { default as ImageGrid } from './ImageGrid';
 export { UserMenu } from './UserMenu';
 export { default as EzoicAd } from './EzoicAd';
+export { default as Breadcrumbs } from './Breadcrumbs';
 
 

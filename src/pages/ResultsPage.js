@@ -233,10 +233,10 @@ export function ResultsPage() {
     
     try {
       // Create EventSource for SSE
-      const encodedQuery = encodeURIComponent(query);
-      const eventSource = new EventSource(
-        `${API_URL}/api/search/stream?query=${encodedQuery}&marketplace=ebay${precisionMode ? '&precision=1' : ''}`
-      );
+      const streamUrl = `${API_URL}/api/search/stream?query=${encodeURIComponent(query)}&marketplace=ebay${precisionMode ? '&precision=1' : ''}`;
+      console.log("📡 Connecting to SSE:", streamUrl);
+      
+      const eventSource = new EventSource(streamUrl);
       
       eventSource.addEventListener('status', (event) => {
         const data = JSON.parse(event.data);
@@ -393,19 +393,7 @@ export function ResultsPage() {
         if (event.data) {
           const data = JSON.parse(event.data);
           console.error('❌ Error:', data);
-          
-          let displayMessage = data.message || 'An error occurred during search.';
-          
-          // Fallback check if the backend didn't already transform it
-          if (displayMessage === 'EMPTY_RESULT') {
-            displayMessage = "We couldn't find any images on that Pinterest board.\n\n" +
-              "Please make sure:\n" +
-              "1. The URL is for a PUBLIC Pinterest Board (not a single pin or private board).\n" +
-              "2. The board contains at least one image.\n" +
-              "3. The URL looks like: pinterest.com/username/board-name/";
-          }
-          
-          alert(displayMessage);
+          alert(data.message || 'An error occurred during search.');
         }
         setIsSearching(false);
         eventSource.close();
@@ -415,6 +403,7 @@ export function ResultsPage() {
         console.error('❌ SSE Error:', error);
         if (eventSource.readyState === EventSource.CLOSED) {
           console.log('SSE closed');
+          setIsSearching(false);
         } else {
           alert('Connection error. Please try again.');
           setIsSearching(false);

@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X, Menu, ArrowLeft, Plus, Camera, ChevronDown, Pencil, Search, Paperclip, Settings, LogIn, Gift, Sparkles } from 'lucide-react';
+import { X, Menu, ArrowLeft, Plus, Camera, ChevronDown, Pencil, Search, Paperclip, Settings, LogIn, Gift, Sparkles, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../../assets/logo.svg';
 import { useSearch } from '../../context/SearchContext';
 import { useAuth } from '../../context/AuthContext';
-import { VisualSearchModal, SettingsModal, CreatorApplicationModal, PrecisionSearchAuthModal } from '../modals';
+import { VisualSearchModal, SettingsModal, CreatorApplicationModal, DeveloperAffiliateApplicationModal, PrecisionSearchAuthModal } from '../modals';
 import { PrecisionSearchToggle } from '../common/PrecisionSearchToggle';
 import Stack from '../common/Stack';
 import ImageGrid from '../common/ImageGrid';
@@ -18,12 +18,13 @@ import { UserMenu } from '../common/UserMenu';
 export function ResultsNavbar({ onNewSearch }) {
   const navigate = useNavigate();
   const { searchQuery, setSearchQuery, isSearching, precisionSearch, setPrecisionSearch } = useSearch();
-  const { isAuthenticated, dbUser, currentUser, logout } = useAuth();
+  const { isAuthenticated, dbUser, currentUser, logout, isShopifyDeveloper } = useAuth();
   const [localQuery, setLocalQuery] = useState(searchQuery);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showVisualSearchModal, setShowVisualSearchModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCreatorApp, setShowCreatorApp] = useState(false);
+  const [showDeveloperApp, setShowDeveloperApp] = useState(false);
   const [showPrecisionAuthModal, setShowPrecisionAuthModal] = useState(false);
   const inputRef = useRef(null);
   const visualSearchRef = useRef(null);
@@ -70,6 +71,13 @@ export function ResultsNavbar({ onNewSearch }) {
     const handler = () => setShowCreatorApp(true);
     window.addEventListener('open-creator-application', handler);
     return () => window.removeEventListener('open-creator-application', handler);
+  }, []);
+
+  // Listen for developer affiliate application open event from SettingsModal
+  useEffect(() => {
+    const handler = () => setShowDeveloperApp(true);
+    window.addEventListener('open-developer-application', handler);
+    return () => window.removeEventListener('open-developer-application', handler);
   }, []);
 
   // Filter valid image files
@@ -745,6 +753,16 @@ export function ResultsNavbar({ onNewSearch }) {
                       Influencer Dashboard
                     </Link>
                   )}
+                  {(isShopifyDeveloper || dbUser?.role === 'admin') && (
+                    <Link
+                      to="/developer/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
+                    >
+                      <Store className="w-4 h-4" />
+                      Developer Dashboard
+                    </Link>
+                  )}
                   <button
                     onClick={() => { setMobileMenuOpen(false); logout(); }}
                     className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#5D5F60] hover:text-red-500 hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
@@ -770,6 +788,7 @@ export function ResultsNavbar({ onNewSearch }) {
       {/* Modals — rendered outside nav to avoid stacking context issues */}
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
       <CreatorApplicationModal isOpen={showCreatorApp} onClose={() => setShowCreatorApp(false)} />
+      <DeveloperAffiliateApplicationModal isOpen={showDeveloperApp} onClose={() => setShowDeveloperApp(false)} />
       <PrecisionSearchAuthModal
         isOpen={showPrecisionAuthModal}
         onClose={() => setShowPrecisionAuthModal(false)}

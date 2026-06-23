@@ -14,8 +14,11 @@ import {
   TrendingUp, Trash2, ChevronRight, ChevronLeft,
   ArrowLeft, Shield, Activity, Menu,
   FileText, DollarSign, Download, Wallet, Sparkles,
-  Check, X as XIcon, AlertCircle, Loader2, Copy, Clock,
+  Check, X as XIcon, AlertCircle, Loader2, Copy, Clock, ShoppingBag,
+  BookOpen, Bug, Eye, EyeOff, Pencil, Plus, Save, Upload, Image as ImageIcon, Tag, Star,
 } from 'lucide-react';
+import { adminBlogAPI, adminReportAPI } from '../lib/api';
+import { BlogEditor } from '../components/blog';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -269,6 +272,7 @@ function ToolsTab() {
   const { fetchAdmin } = useAdminAPI();
   const [logs, setLogs] = useState([]);
   const [cacheMsg, setCacheMsg] = useState('');
+  const [migrationMsg, setMigrationMsg] = useState('');
   const [logsLoading, setLogsLoading] = useState(false);
   const [logLevel, setLogLevel] = useState('');
 
@@ -295,6 +299,16 @@ function ToolsTab() {
     }
   };
 
+  const runMigration = async (endpoint, label) => {
+    try {
+      setMigrationMsg(`Running ${label} migration...`);
+      const data = await fetchAdmin(endpoint, { method: 'POST' });
+      setMigrationMsg(data.message || `${label} migration completed`);
+    } catch (err) {
+      setMigrationMsg(`${label} migration failed`);
+    }
+  };
+
   useEffect(() => { loadLogs(); }, []);
 
   const levelColors = { info: 'text-blue-400', warn: 'text-yellow-400', error: 'text-red-400' };
@@ -314,6 +328,35 @@ function ToolsTab() {
             <Trash2 className="w-4 h-4" /> Clear Cache
           </button>
           {cacheMsg && <span className="text-green-400 text-sm">{cacheMsg}</span>}
+        </div>
+      </div>
+
+      {/* Migrations */}
+      <div className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-2">Database Migrations</h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Run these once after deploying schema changes. This fixes errors like missing blog_posts or commission_type.
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => runMigration('/api/admin/migrate-referral', 'Referral')}
+            className="px-3 py-2 bg-[#1D1F20] border border-[#3A3C3E] text-gray-300 rounded-lg hover:border-[#EB9D2A]/50 transition-colors text-sm"
+          >
+            Run Referral Migration
+          </button>
+          <button
+            onClick={() => runMigration('/api/admin/migrate-blog', 'Blog')}
+            className="px-3 py-2 bg-[#1D1F20] border border-[#3A3C3E] text-gray-300 rounded-lg hover:border-[#EB9D2A]/50 transition-colors text-sm"
+          >
+            Run Blog Migration
+          </button>
+          <button
+            onClick={() => runMigration('/api/admin/migrate-error-reports', 'Reports')}
+            className="px-3 py-2 bg-[#1D1F20] border border-[#3A3C3E] text-gray-300 rounded-lg hover:border-[#EB9D2A]/50 transition-colors text-sm"
+          >
+            Run Reports Migration
+          </button>
+          {migrationMsg && <span className="text-sm text-[#EB9D2A]">{migrationMsg}</span>}
         </div>
       </div>
 
@@ -963,6 +1006,688 @@ function SystemSettingsTab() {
 }
 
 // ─── Loading state ────────────────────────────────────────────────
+function ShopifyAffiliatesTab() {
+  const { fetchAdmin } = useAdminAPI();
+  const [applications, setApplications] = useState([]);
+  const [developers, setDevelopers] = useState([]);
+  const [attributions, setAttributions] = useState([]);
+  const [ledger, setLedger] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [manual, setManual] = useState({
+    shopDomain: '',
+    developerUserId: '',
+    referralCode: '',
+    baseAmount: '',
+    commissionRate: '0.20',
+    notes: '',
+  });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [apps, devs, attrs, ledg] = await Promise.all([
+        fetchAdmin('/api/admin/shopify-affiliates/applications'),
+        fetchAdmin('/api/admin/shopify-affiliates/developers'),
+        fetchAdmin('/api/admin/shopify-affiliates/attributions'),
+        fetchAdmin('/api/admin/shopify-affiliates/ledger'),
+      ]);
+      setApplications(apps.applications || []);
+      setDevelopers(devs.developers || []);
+      setAttributions(attrs.attributions || []);
+      setLedger(ledg.ledger || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchAdmin]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const review = async (id, status) => {
+    await fetchAdmin(`/api/admin/shopify-affiliates/applications/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, adminNotes: '' }),
+    });
+    load();
+  };
+
+  const updateCommission = async (userId, commissionRate) => {
+    await fetchAdmin(`/api/admin/shopify-affiliates/developers/${userId}/commission`, {
+      method: 'PUT',
+      body: JSON.stringify({ commissionRate }),
+    });
+    load();
+  };
+
+  const addManualLedger = async (event) => {
+    event.preventDefault();
+    await fetchAdmin('/api/admin/shopify-affiliates/ledger/manual', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...manual,
+        developerUserId: Number(manual.developerUserId),
+        baseAmount: Number(manual.baseAmount || 0),
+        commissionRate: Number(manual.commissionRate || 0.2),
+      }),
+    });
+    setManual({ shopDomain: '', developerUserId: '', referralCode: '', baseAmount: '', commissionRate: '0.20', notes: '' });
+    load();
+  };
+
+  if (loading) return <LoadingState />;
+
+  const fmt = (value) => `$${Number(value || 0).toFixed(2)}`;
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-lg font-semibold text-white">Shopify Developer Affiliates</h2>
+
+      <div className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Applications</h3>
+        <div className="space-y-2">
+          {applications.length === 0 ? <p className="text-gray-500 text-sm">No applications yet.</p> : applications.map((app) => (
+            <div key={app.id} className="border border-[#3A3C3E] rounded-lg p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-white text-sm font-medium">{app.full_name}</div>
+                  <div className="text-xs text-gray-500">{app.email}</div>
+                  <div className="text-sm text-gray-300 mt-2">{app.reason}</div>
+                </div>
+                <span className="text-xs text-[#EB9D2A]">{app.status}</span>
+              </div>
+              {app.status === 'pending' && (
+                <div className="flex gap-2 mt-3">
+                  <button onClick={() => review(app.id, 'approved')} className="px-3 py-1.5 bg-green-500/10 text-green-400 rounded-lg text-xs">Approve</button>
+                  <button onClick={() => review(app.id, 'rejected')} className="px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg text-xs">Reject</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#3A3C3E]">
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Developers</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#3A3C3E]">
+                {['Developer', 'Code', 'Commission', 'Active Shops', 'Total Commission'].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs text-gray-500 uppercase">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#3A3C3E]">
+              {developers.map((dev) => (
+                <tr key={dev.id}>
+                  <td className="px-4 py-3">
+                    <div className="text-white">{dev.display_name || 'Unnamed'}</div>
+                    <div className="text-xs text-gray-500">{dev.email}</div>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-[#EB9D2A]">{dev.referral_code}</td>
+                  <td className="px-4 py-3">
+                    <input
+                      defaultValue={dev.commission_rate}
+                      onBlur={(event) => {
+                        if (String(event.target.value) !== String(dev.commission_rate)) {
+                          updateCommission(dev.id, event.target.value);
+                        }
+                      }}
+                      className="w-20 px-2 py-1 bg-[#1D1F20] border border-[#3A3C3E] rounded text-white"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-gray-300">{dev.active_shops}</td>
+                  <td className="px-4 py-3 text-green-400">{fmt(dev.total_commission)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Attributions</h3>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {attributions.map((attr) => (
+              <div key={attr.shop_domain} className="bg-[#1D1F20] rounded-lg p-3 text-sm">
+                <div className="text-white font-medium">{attr.shop_domain}</div>
+                <div className="text-gray-500 text-xs">
+                  current: {attr.referral_code || '-'} | last valid: {attr.last_valid_referral_code || '-'} | {attr.status}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Manual Ledger Entry</h3>
+          <form onSubmit={addManualLedger} className="space-y-2">
+            {[
+              ['shopDomain', 'Shop domain'],
+              ['developerUserId', 'Developer user ID'],
+              ['referralCode', 'Referral code'],
+              ['baseAmount', 'Base amount'],
+              ['commissionRate', 'Commission rate'],
+              ['notes', 'Notes'],
+            ].map(([key, label]) => (
+              <input
+                key={key}
+                value={manual[key]}
+                onChange={(event) => setManual((prev) => ({ ...prev, [key]: event.target.value }))}
+                placeholder={label}
+                className="w-full px-3 py-2 bg-[#1D1F20] border border-[#3A3C3E] rounded-lg text-sm text-white"
+                required={key !== 'notes'}
+              />
+            ))}
+            <button className="px-4 py-2 bg-[#EB9D2A] text-[#1D1F20] rounded-lg text-sm font-semibold">Add Manual Entry</button>
+          </form>
+        </div>
+      </div>
+
+      <div className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Recent Ledger</h3>
+        <div className="space-y-1 max-h-72 overflow-y-auto">
+          {ledger.map((entry) => (
+            <div key={entry.id} className="flex items-center justify-between gap-3 text-sm py-2 border-b border-[#3A3C3E]">
+              <span className="text-gray-300">{entry.shop_domain}</span>
+              <span className="font-mono text-[#EB9D2A]">{entry.referral_code}</span>
+              <span className="text-green-400">{fmt(entry.commission_amount)}</span>
+              <span className="text-gray-500 text-xs">{entry.source}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Blog Management Tab ──────────────────────────────────────────
+const EMPTY_POST = {
+  id: null,
+  title: '',
+  slug: '',
+  author: '',
+  caption: '',
+  excerpt: '',
+  category: '',
+  tags: '',
+  cover_image: '',
+  content_md: '',
+  status: 'draft',
+  featured: false,
+  seo_description: '',
+};
+
+const STATUS_STYLES = {
+  draft: 'bg-gray-500/20 text-gray-300',
+  published: 'bg-green-500/20 text-green-400',
+  hidden: 'bg-yellow-500/20 text-yellow-400',
+};
+
+function BlogTab() {
+  const token = localStorage.getItem('admin_token');
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState('list'); // 'list' | 'edit'
+  const [form, setForm] = useState(EMPTY_POST);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [needsBlogMigration, setNeedsBlogMigration] = useState(false);
+  const coverInputRef = React.useRef(null);
+  const importInputRef = React.useRef(null);
+
+  const loadPosts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminBlogAPI.list(token);
+      setPosts(res.data.posts || []);
+      setNeedsBlogMigration(false);
+    } catch (err) {
+      const text = err.response?.data?.error || 'Failed to load posts';
+      setNeedsBlogMigration(text.includes('relation') || text.includes('blog_posts'));
+      setMessage({ type: 'error', text });
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { loadPosts(); }, [loadPosts]);
+
+  const flash = (type, text) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 4000);
+  };
+
+  const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }));
+
+  const startNew = () => { setForm(EMPTY_POST); setView('edit'); };
+
+  const runBlogMigration = async () => {
+    try {
+      setMessage({ type: 'success', text: 'Running blog migration...' });
+      await adminBlogAPI.migrate(token);
+      setNeedsBlogMigration(false);
+      flash('success', 'Blog migration completed');
+      loadPosts();
+    } catch (err) {
+      flash('error', err.response?.data?.error || 'Blog migration failed');
+    }
+  };
+
+  const startEdit = async (id) => {
+    try {
+      const res = await adminBlogAPI.get(token, id);
+      const p = res.data.post;
+      setForm({
+        ...EMPTY_POST,
+        ...p,
+        tags: Array.isArray(p.tags) ? p.tags.join(', ') : (p.tags || ''),
+      });
+      setView('edit');
+    } catch (err) {
+      flash('error', 'Failed to open post');
+    }
+  };
+
+  const uploadImage = useCallback(async (file) => {
+    const res = await adminBlogAPI.uploadImage(token, file);
+    return res.data.url;
+  }, [token]);
+
+  const handleCoverPick = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const url = await uploadImage(file);
+      setField('cover_image', url);
+    } catch (err) {
+      flash('error', err.response?.data?.error || 'Image upload failed (check Cloudinary config)');
+    }
+  };
+
+  const handleSave = async (overrideStatus) => {
+    if (!form.title.trim()) { flash('error', 'Title is required'); return; }
+    if (form.cover_image && !isValidHttpUrl(form.cover_image)) {
+      flash('error', 'Cover image must be a valid http(s) URL');
+      return;
+    }
+    setSaving(true);
+    const payload = {
+      ...form,
+      status: overrideStatus || form.status,
+      tags: form.tags,
+    };
+    try {
+      let saved;
+      if (form.id) {
+        saved = await adminBlogAPI.update(token, form.id, payload);
+      } else {
+        saved = await adminBlogAPI.create(token, payload);
+      }
+      const p = saved.data.post;
+      setForm((f) => ({ ...f, id: p.id, slug: p.slug, status: p.status, tags: Array.isArray(p.tags) ? p.tags.join(', ') : f.tags }));
+      flash('success', `Saved (${p.status})`);
+      loadPosts();
+    } catch (err) {
+      flash('error', err.response?.data?.error || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const changeStatus = async (id, status) => {
+    try {
+      await adminBlogAPI.setStatus(token, id, status);
+      loadPosts();
+      if (form.id === id) setField('status', status);
+    } catch (err) {
+      flash('error', 'Failed to update status');
+    }
+  };
+
+  const remove = async (id) => {
+    if (!window.confirm('Delete this post permanently?')) return;
+    try {
+      await adminBlogAPI.remove(token, id);
+      flash('success', 'Post deleted');
+      if (form.id === id) { setView('list'); setForm(EMPTY_POST); }
+      loadPosts();
+    } catch (err) {
+      flash('error', 'Failed to delete');
+    }
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let text = String(reader.result || '');
+      let title = form.title;
+      // Strip simple YAML front matter and pull a title if present
+      const fm = text.match(/^---\n([\s\S]*?)\n---\n?/);
+      if (fm) {
+        const titleMatch = fm[1].match(/title:\s*["']?(.+?)["']?\s*$/m);
+        if (titleMatch) title = titleMatch[1];
+        text = text.slice(fm[0].length);
+      }
+      if (!title) {
+        const h1 = text.match(/^#\s+(.+)$/m);
+        if (h1) title = h1[1];
+      }
+      setForm((f) => ({ ...f, content_md: text, title: f.title || title }));
+      flash('success', 'Markdown imported');
+    };
+    reader.readAsText(file);
+  };
+
+  const handleExport = () => {
+    const fm = [
+      '---',
+      `title: "${(form.title || '').replace(/"/g, '\\"')}"`,
+      form.author ? `author: "${form.author}"` : null,
+      form.tags ? `tags: [${form.tags.split(',').map((t) => `"${t.trim()}"`).join(', ')}]` : null,
+      form.category ? `category: "${form.category}"` : null,
+      '---',
+      '',
+    ].filter(Boolean).join('\n');
+    const blob = new Blob([fm + (form.content_md || '')], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${form.slug || slugifyClient(form.title) || 'post'}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const inputCls = 'w-full bg-[#2A2C2E] border border-[#3A3C3E] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-[#EB9D2A] focus:outline-none';
+  const labelCls = 'block text-xs font-medium text-gray-400 mb-1';
+
+  if (view === 'list') {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-xl font-bold flex items-center gap-2"><BookOpen className="w-5 h-5 text-[#EB9D2A]" /> Blog Posts</h2>
+            <p className="text-sm text-gray-400">Write, edit, publish and hide articles.</p>
+          </div>
+          <button onClick={startNew} className="flex items-center gap-1.5 bg-[#EB9D2A] text-[#1D1F20] font-medium px-4 py-2 rounded-lg hover:bg-[#d68f22] transition-colors text-sm">
+            <Plus className="w-4 h-4" /> New Post
+          </button>
+        </div>
+
+        {message && (
+          <div className={`mb-4 text-sm px-3 py-2 rounded-lg flex items-center justify-between gap-3 ${message.type === 'error' ? 'bg-red-500/15 text-red-400' : 'bg-green-500/15 text-green-400'}`}>
+            <span>{message.text}</span>
+            {needsBlogMigration && (
+              <button onClick={runBlogMigration} className="px-3 py-1 rounded-md bg-[#EB9D2A] text-[#1D1F20] font-medium">
+                Run blog migration
+              </button>
+            )}
+          </div>
+        )}
+
+        {loading ? <LoadingState /> : posts.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            No posts yet. Click "New Post" to write your first article.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {posts.map((p) => (
+              <div key={p.id} className="flex items-center gap-3 bg-[#2A2C2E] border border-[#3A3C3E] rounded-lg p-3">
+                <div className="w-14 h-14 rounded-md bg-[#1D1F20] flex-shrink-0 overflow-hidden flex items-center justify-center">
+                  {p.cover_image ? <img src={p.cover_image} alt="" className="w-full h-full object-cover" /> : <ImageIcon className="w-5 h-5 text-gray-600" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${STATUS_STYLES[p.status] || ''}`}>{p.status}</span>
+                    {p.featured && <Star className="w-3.5 h-3.5 text-[#EB9D2A]" />}
+                  </div>
+                  <h3 className="text-sm font-medium text-white truncate">{p.title}</h3>
+                  <p className="text-xs text-gray-500 truncate">/{p.slug} · {p.read_time || 1} min · updated {new Date(p.updated_at).toLocaleDateString()}</p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button onClick={() => startEdit(p.id)} title="Edit" className="p-2 rounded-md text-gray-400 hover:text-white hover:bg-[#3A3C3E]"><Pencil className="w-4 h-4" /></button>
+                  {p.status !== 'published'
+                    ? <button onClick={() => changeStatus(p.id, 'published')} title="Publish" className="p-2 rounded-md text-gray-400 hover:text-green-400 hover:bg-[#3A3C3E]"><Eye className="w-4 h-4" /></button>
+                    : <button onClick={() => changeStatus(p.id, 'hidden')} title="Hide from public" className="p-2 rounded-md text-gray-400 hover:text-yellow-400 hover:bg-[#3A3C3E]"><EyeOff className="w-4 h-4" /></button>}
+                  <button onClick={() => remove(p.id)} title="Delete" className="p-2 rounded-md text-gray-400 hover:text-red-400 hover:bg-[#3A3C3E]"><Trash2 className="w-4 h-4" /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Editor view ───────────────────────────────────────────────
+  return (
+    <div className="max-w-none">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <button onClick={() => { setView('list'); loadPosts(); }} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white">
+          <ArrowLeft className="w-4 h-4" /> Back to list
+        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={() => importInputRef.current?.click()} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-[#3A3C3E] text-gray-300 hover:bg-[#2A2C2E]"><Upload className="w-4 h-4" /> Import .md</button>
+          <button onClick={handleExport} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-[#3A3C3E] text-gray-300 hover:bg-[#2A2C2E]"><Download className="w-4 h-4" /> Export .md</button>
+          <button onClick={() => handleSave('draft')} disabled={saving} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-[#3A3C3E] text-gray-300 hover:bg-[#2A2C2E] disabled:opacity-50"><Save className="w-4 h-4" /> Save draft</button>
+          <button onClick={() => handleSave('published')} disabled={saving} className="flex items-center gap-1.5 text-sm px-4 py-1.5 rounded-lg bg-[#EB9D2A] text-[#1D1F20] font-medium hover:bg-[#d68f22] disabled:opacity-50">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Publish</button>
+          <input ref={importInputRef} type="file" accept=".md,.markdown,text/markdown,text/plain" className="hidden" onChange={handleImport} />
+        </div>
+      </div>
+
+      {message && <div className={`mb-4 text-sm px-3 py-2 rounded-lg ${message.type === 'error' ? 'bg-red-500/15 text-red-400' : 'bg-green-500/15 text-green-400'}`}>{message.text}</div>}
+
+      <div className="grid 2xl:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
+        {/* Metadata column */}
+        <div className="space-y-3 xl:order-2 xl:sticky xl:top-4">
+          <div>
+            <label className={labelCls}>Title *</label>
+            <input className={inputCls} value={form.title} onChange={(e) => setField('title', e.target.value)} placeholder="Post title" />
+          </div>
+          <div>
+            <label className={labelCls}>Slug (URL)</label>
+            <input className={inputCls} value={form.slug} onChange={(e) => setField('slug', e.target.value)} placeholder="auto-generated from title" />
+          </div>
+          <div>
+            <label className={labelCls}>Author</label>
+            <input className={inputCls} value={form.author || ''} onChange={(e) => setField('author', e.target.value)} placeholder="Author name" />
+          </div>
+          <div>
+            <label className={labelCls}>Caption / Subtitle</label>
+            <input className={inputCls} value={form.caption || ''} onChange={(e) => setField('caption', e.target.value)} placeholder="Short subtitle" />
+          </div>
+          <div>
+            <label className={labelCls}>Excerpt (list preview)</label>
+            <textarea className={inputCls} rows={3} value={form.excerpt || ''} onChange={(e) => setField('excerpt', e.target.value)} placeholder="Quick-read description shown in lists" />
+          </div>
+          <div>
+            <label className={labelCls}>Category</label>
+            <input className={inputCls} value={form.category || ''} onChange={(e) => setField('category', e.target.value)} placeholder="e.g. Shopping Tips" />
+          </div>
+          <div>
+            <label className={labelCls}><Tag className="w-3 h-3 inline mr-1" />Tags (comma separated)</label>
+            <input className={inputCls} value={form.tags || ''} onChange={(e) => setField('tags', e.target.value)} placeholder="eBay, Deals, Vintage" />
+          </div>
+          <div>
+            <label className={labelCls}>Cover image</label>
+            {form.cover_image && <img src={form.cover_image} alt="cover" className="w-full h-28 object-cover rounded-lg mb-2" />}
+            <input
+              type="url"
+              className={`${inputCls} mb-2`}
+              value={form.cover_image || ''}
+              onChange={(e) => setField('cover_image', e.target.value)}
+              placeholder="https://... (paste image URL)"
+            />
+            <button onClick={() => coverInputRef.current?.click()} className="w-full flex items-center justify-center gap-1.5 text-sm px-3 py-2 rounded-lg border border-dashed border-[#3A3C3E] text-gray-300 hover:bg-[#2A2C2E]">
+              <ImageIcon className="w-4 h-4" /> {form.cover_image ? 'Replace cover' : 'Upload cover'}
+            </button>
+            <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverPick} />
+          </div>
+          <div>
+            <label className={labelCls}>SEO meta description</label>
+            <textarea className={inputCls} rows={2} value={form.seo_description || ''} onChange={(e) => setField('seo_description', e.target.value)} placeholder="Overrides excerpt for search engines" />
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm text-gray-300">
+              <input type="checkbox" checked={!!form.featured} onChange={(e) => setField('featured', e.target.checked)} className="accent-[#EB9D2A]" />
+              Featured
+            </label>
+            <select value={form.status} onChange={(e) => setField('status', e.target.value)} className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-lg px-2 py-1.5 text-sm text-white">
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </div>
+          {form.id && (
+            <button onClick={() => remove(form.id)} className="w-full flex items-center justify-center gap-1.5 text-sm px-3 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10">
+              <Trash2 className="w-4 h-4" /> Delete post
+            </button>
+          )}
+        </div>
+
+        {/* Editor column */}
+        <div className="min-w-0 xl:order-1">
+          <label className={labelCls}>Content</label>
+          <BlogEditor value={form.content_md} onChange={(md) => setField('content_md', md)} onImageUpload={uploadImage} title={form.slug || form.title} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function slugifyClient(str) {
+  return String(str || '').toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function isValidHttpUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+// ─── Bug / Crash Reports Tab ──────────────────────────────────────
+const REPORT_STATUS_STYLES = {
+  open: 'bg-red-500/20 text-red-400',
+  resolved: 'bg-green-500/20 text-green-400',
+  ignored: 'bg-gray-500/20 text-gray-400',
+};
+
+function ReportsTab() {
+  const token = localStorage.getItem('admin_token');
+  const [reports, setReports] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState({ status: '', type: '' });
+  const [expanded, setExpanded] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [r, s] = await Promise.all([
+        adminReportAPI.list(token, filter),
+        adminReportAPI.stats(token),
+      ]);
+      setReports(r.data.reports || []);
+      setStats(s.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, filter]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const setStatus = async (id, status) => {
+    try { await adminReportAPI.setStatus(token, id, status); load(); } catch (err) { console.error(err); }
+  };
+  const remove = async (id) => {
+    if (!window.confirm('Delete this report?')) return;
+    try { await adminReportAPI.remove(token, id); load(); } catch (err) { console.error(err); }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <h2 className="text-xl font-bold flex items-center gap-2"><Bug className="w-5 h-5 text-[#EB9D2A]" /> Bug & Crash Reports</h2>
+          <p className="text-sm text-gray-400">Automatic crashes and user-submitted problem reports.</p>
+        </div>
+        <button onClick={load} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-[#3A3C3E] text-gray-300 hover:bg-[#2A2C2E]"><RefreshCw className="w-4 h-4" /> Refresh</button>
+      </div>
+
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          <div className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-lg p-3"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-gray-400">Total</div></div>
+          <div className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-lg p-3"><div className="text-2xl font-bold text-red-400">{stats.open}</div><div className="text-xs text-gray-400">Open</div></div>
+          <div className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-lg p-3"><div className="text-2xl font-bold">{stats.user_reports}</div><div className="text-xs text-gray-400">User reports</div></div>
+          <div className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-lg p-3"><div className="text-2xl font-bold">{stats.auto_reports}</div><div className="text-xs text-gray-400">Auto-captured</div></div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 mb-4">
+        <select value={filter.status} onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value }))} className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-lg px-2 py-1.5 text-sm">
+          <option value="">All statuses</option>
+          <option value="open">Open</option>
+          <option value="resolved">Resolved</option>
+          <option value="ignored">Ignored</option>
+        </select>
+        <select value={filter.type} onChange={(e) => setFilter((f) => ({ ...f, type: e.target.value }))} className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-lg px-2 py-1.5 text-sm">
+          <option value="">All types</option>
+          <option value="user">User</option>
+          <option value="auto">Auto</option>
+        </select>
+      </div>
+
+      {loading ? <LoadingState /> : reports.length === 0 ? (
+        <div className="text-center py-16 text-gray-400"><Bug className="w-10 h-10 mx-auto mb-3 opacity-50" /> No reports.</div>
+      ) : (
+        <div className="space-y-2">
+          {reports.map((r) => (
+            <div key={r.id} className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-lg p-3">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${REPORT_STATUS_STYLES[r.status] || ''}`}>{r.status}</span>
+                    <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-[#1D1F20] text-gray-400">{r.type} · {r.source}</span>
+                    <span className="text-xs text-gray-500">{new Date(r.created_at).toLocaleString()}</span>
+                  </div>
+                  <p className="text-sm text-white truncate">{r.message || '(no message)'}</p>
+                  {r.url && <p className="text-xs text-gray-500 truncate">{r.url}</p>}
+                  {expanded === r.id && (
+                    <div className="mt-2 space-y-2">
+                      {r.user_email && <p className="text-xs text-gray-400">From: {r.user_email}</p>}
+                      {r.stack && <pre className="text-[11px] text-gray-400 bg-[#1D1F20] rounded p-2 overflow-x-auto whitespace-pre-wrap max-h-60">{r.stack}</pre>}
+                      {r.user_agent && <p className="text-[11px] text-gray-500">{r.user_agent}</p>}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {r.status !== 'resolved' && <button onClick={() => setStatus(r.id, 'resolved')} title="Mark resolved" className="p-2 rounded-md text-gray-400 hover:text-green-400 hover:bg-[#3A3C3E]"><Check className="w-4 h-4" /></button>}
+                  {r.status !== 'ignored' && <button onClick={() => setStatus(r.id, 'ignored')} title="Ignore" className="p-2 rounded-md text-gray-400 hover:text-yellow-400 hover:bg-[#3A3C3E]"><EyeOff className="w-4 h-4" /></button>}
+                  <button onClick={() => remove(r.id)} title="Delete" className="p-2 rounded-md text-gray-400 hover:text-red-400 hover:bg-[#3A3C3E]"><Trash2 className="w-4 h-4" /></button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LoadingState() {
   return (
     <div className="flex items-center justify-center py-12">
@@ -1000,6 +1725,9 @@ export function AdminDashboard() {
     { id: 'transactions', label: 'Transactions', icon: <DollarSign /> },
     { id: 'withdrawals', label: 'Withdrawals', icon: <Download /> },
     { id: 'referral', label: 'Referral', icon: <Sparkles /> },
+    { id: 'shopify-affiliates', label: 'Shopify Affiliates', icon: <ShoppingBag /> },
+    { id: 'blog', label: 'Blog', icon: <BookOpen /> },
+    { id: 'reports', label: 'Reports', icon: <Bug /> },
     { id: 'sys-settings', label: 'Settings', icon: <Settings /> },
     { id: 'tools', label: 'Tools', icon: <Settings /> },
   ];
@@ -1064,7 +1792,7 @@ export function AdminDashboard() {
 
         {/* Content — min-w-0 prevents flex overflow, overflow-x-auto handles wide tables */}
         <div className="flex-1 min-w-0 p-4 sm:p-6 overflow-x-auto">
-          <div className="max-w-4xl">
+          <div className={activeTab === 'blog' ? 'max-w-none' : activeTab === 'reports' ? 'max-w-6xl' : 'max-w-4xl'}>
             {activeTab === 'overview' && <OverviewTab />}
             {activeTab === 'users' && <UsersTab />}
             {activeTab === 'analytics' && <AnalyticsTab />}
@@ -1072,6 +1800,9 @@ export function AdminDashboard() {
             {activeTab === 'transactions' && <TransactionsTab />}
             {activeTab === 'withdrawals' && <WithdrawalsTab />}
             {activeTab === 'referral' && <ReferralOverviewTab />}
+            {activeTab === 'shopify-affiliates' && <ShopifyAffiliatesTab />}
+            {activeTab === 'blog' && <BlogTab />}
+            {activeTab === 'reports' && <ReportsTab />}
             {activeTab === 'sys-settings' && <SystemSettingsTab />}
             {activeTab === 'tools' && <ToolsTab />}
           </div>
