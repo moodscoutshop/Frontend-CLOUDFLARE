@@ -29,7 +29,7 @@ export function Breadcrumbs({ items = [], backTo, backLabel = 'Back', className 
     <div className={`flex items-center gap-3 flex-wrap ${className}`}>
       <button
         onClick={handleBack}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-[#5D5F60] hover:text-[#1D1F20] bg-white border border-[#D4CFC0] rounded-lg px-3 py-1.5 hover:bg-[#FDFDF8] transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface bg-surface-elevated border border-outline/30 dark:border-outline/40 dark:text-on-surface/80 dark:hover:text-on-surface rounded-lg px-3 py-1.5 hover:bg-surface-container-low transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         {backLabel}
@@ -41,18 +41,27 @@ export function Breadcrumbs({ items = [], backTo, backLabel = 'Back', className 
           return (
             <React.Fragment key={`${item.label}-${idx}`}>
               {item.to && !isLast ? (
-                <Link to={item.to} className="text-[#5D5F60] hover:text-[#EB9D2A] transition-colors whitespace-nowrap">
+                <Link
+                  to={item.to}
+                  className="text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap dark:text-on-surface/75 dark:hover:text-primary"
+                >
                   {item.label}
                 </Link>
               ) : (
                 <span
-                  className={`whitespace-nowrap ${isLast ? 'text-[#1D1F20] font-medium truncate max-w-[200px] sm:max-w-xs' : 'text-[#5D5F60]'}`}
+                  className={`whitespace-nowrap ${
+                    isLast
+                      ? 'text-on-surface font-medium truncate max-w-[200px] sm:max-w-xs dark:text-on-surface'
+                      : 'text-on-surface-variant dark:text-on-surface/75'
+                  }`}
                   title={item.label}
                 >
                   {item.label}
                 </span>
               )}
-              {!isLast && <ChevronRight className="w-3.5 h-3.5 text-[#C5BFAE] flex-shrink-0" />}
+              {!isLast && (
+                <ChevronRight className="w-3.5 h-3.5 text-outline flex-shrink-0 dark:text-on-surface/40" />
+              )}
             </React.Fragment>
           );
         })}

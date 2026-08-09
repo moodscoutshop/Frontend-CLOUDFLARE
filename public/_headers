@@ -1,0 +1,32 @@
+# Cloudflare Pages _headers file
+# Ported and extended from vercel.json headers config.
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+# ── Immutable static asset caching ────────────────────────────────────────────
+# CRA names hashed bundles (main.abc123.js) so they are safe to cache forever.
+/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# ── Media / image assets ───────────────────────────────────────────────────────
+/*.png
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.ico
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.svg
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.jpg
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.webp
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# ── Web manifest / service worker ─────────────────────────────────────────────
+/manifest.json
+  Cache-Control: public, max-age=3600
+
+# ── All routes — security headers ─────────────────────────────────────────────
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.googletagmanager.com https://pagead2.googlesyndication.com https://www.ezojs.com https://the.gatekeeperconsent.com https://cmp.gatekeeperconsent.com https://ezoicanalytics.com https://resources.infolinks.com https://g.ezoic.net https://go.ezodn.com https://apis.google.com https://www.gstatic.com https://moodscout-8a4fe.firebaseapp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.moodscout.shop https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com https://firebase.googleapis.com https://region1.google-analytics.com https://www.google-analytics.com https://stats.g.doubleclick.net https://cmp.gatekeeperconsent.com https://the.gatekeeperconsent.com https://g.ezoic.net https://ezoicanalytics.com https://privacy.gatekeeperconsent.com https://moodscout-8a4fe.firebaseapp.com; frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://moodscout-8a4fe.firebaseapp.com; object-src 'none';

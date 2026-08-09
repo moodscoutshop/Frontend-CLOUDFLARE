@@ -118,15 +118,15 @@ export function PinterestTab({ onReSearchFromImages }) {
       <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 lg:gap-8 mb-6">
         {/* Left: title */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="w-10 h-10 bg-[#E60023] rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-pinterest rounded-lg flex items-center justify-center">
             <Heart className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-[#1D1F20]">
+            <h2 className="text-xl sm:text-2xl font-bold text-on-surface">
               {isImageUploadSearch ? 'Your Images' : 'Pinterest Board Images'}
             </h2>
             {boardName && !isImageUploadSearch && (
-              <p className="text-sm text-[#5D5F60]">Board: {boardName}</p>
+              <p className="text-sm text-on-surface-variant">Board: {boardName}</p>
             )}
           </div>
         </div>
@@ -139,7 +139,7 @@ export function PinterestTab({ onReSearchFromImages }) {
         {/* Right: info + re-search button */}
         <div className="flex items-center gap-3 flex-shrink-0">
           {pinterestImages && (
-            <span className="text-sm text-[#5D5F60]">
+            <span className="text-sm text-on-surface-variant">
               {hasDeselections
                 ? `${selectedCount} of ${totalImages} selected`
                 : `${totalImages} images`
@@ -151,9 +151,9 @@ export function PinterestTab({ onReSearchFromImages }) {
 
       {/* Re-search action bar - shows when images have been deselected */}
       {hasDeselections && pinterestImages && (
-        <div className="flex items-center justify-between gap-4 mb-6 p-3 rounded-xl bg-[#EB9D2A]/5 border border-[#EB9D2A]/20">
-          <p className="text-sm text-[#5D5F60]">
-            <span className="font-medium text-[#1D1F20]">{selectedCount}</span> image{selectedCount !== 1 ? 's' : ''} selected for re-analysis
+        <div className="flex items-center justify-between gap-4 mb-6 p-3 rounded-xl bg-primary/5 border border-outline/10">
+          <p className="text-sm text-on-surface-variant">
+            <span className="font-medium text-on-surface">{selectedCount}</span> image{selectedCount !== 1 ? 's' : ''} selected for re-analysis
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -183,7 +183,7 @@ export function PinterestTab({ onReSearchFromImages }) {
           {[...Array(10)].map((_, i) => (
             <div
               key={`skeleton-${i}`}
-              className="aspect-square rounded-lg bg-[#EEEFE9] animate-pulse"
+              className="aspect-square rounded-lg bg-surface-container-low animate-pulse"
             />
           ))}
         </div>
@@ -209,11 +209,11 @@ export function PinterestTab({ onReSearchFromImages }) {
       {/* Empty State */}
       {!isLoading && (!pinterestImages || pinterestImages.length === 0) && (
         <div className="text-center py-12">
-          <div className="w-14 h-14 bg-[#EEEFE9] rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Heart className="w-7 h-7 text-[#5D5F60]" />
+          <div className="w-14 h-14 bg-surface-section rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Heart className="w-7 h-7 text-on-surface-variant" />
           </div>
-          <h3 className="text-lg font-semibold text-[#3D3F40] mb-2">No Images Yet</h3>
-          <p className="text-[#5D5F60]">Pinterest images will appear here once loaded.</p>
+          <h3 className="text-lg font-semibold text-on-surface-variant mb-2">No Images Yet</h3>
+          <p className="text-on-surface-variant">Pinterest images will appear here once loaded.</p>
         </div>
       )}
     </div>

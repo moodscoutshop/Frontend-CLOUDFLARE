@@ -1,206 +1,400 @@
 /**
+
  * SignupPage — Email/password registration + Google signup
+
  * Redirects to /app after successful registration.
+
  */
+
 import React, { useState } from 'react';
+
 import { useNavigate, Link } from 'react-router-dom';
+
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
+
 import { useAuth } from '../context/AuthContext';
-import logo from '../assets/logo.svg';
+
+import Logo from '../components/common/Logo';
+
+
+
+const inputClass =
+  'w-full pl-10 pr-4 py-2.5 border border-[#C5BFAE] rounded-xl bg-[#FDFDF8] text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors dark:border-outline/30 dark:bg-surface-container-low';
+
+
 
 export function SignupPage() {
+
   const navigate = useNavigate();
+
   const { signup, googleLogin } = useAuth();
 
+
+
   const [displayName, setDisplayName] = useState('');
+
   const [email, setEmail] = useState('');
+
   const [password, setPassword] = useState('');
+
   const [confirmPassword, setConfirmPassword] = useState('');
+
   const [showPassword, setShowPassword] = useState(false);
+
   const [error, setError] = useState('');
+
   const [loading, setLoading] = useState(false);
 
+
+
   const handleSignup = async (e) => {
+
     e.preventDefault();
+
     setError('');
+
+
 
     if (password !== confirmPassword) {
+
       setError('Passwords do not match.');
+
       return;
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
+
     }
 
-    setLoading(true);
-    try {
-      await signup(email, password, displayName);
-      navigate('/app');
-    } catch (err) {
-      const msg = err.code === 'auth/email-already-in-use' ? 'An account with this email already exists.'
-        : err.code === 'auth/invalid-email' ? 'Invalid email address.'
-        : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.'
-        : 'Signup failed. Please try again.';
-      setError(msg);
-    } finally {
-      setLoading(false);
+    if (password.length < 6) {
+
+      setError('Password must be at least 6 characters.');
+
+      return;
+
     }
+
+
+
+    setLoading(true);
+
+    try {
+
+      await signup(email, password, displayName);
+
+      navigate('/app');
+
+    } catch (err) {
+
+      const msg = err.code === 'auth/email-already-in-use' ? 'An account with this email already exists.'
+
+        : err.code === 'auth/invalid-email' ? 'Invalid email address.'
+
+        : err.code === 'auth/weak-password' ? 'Password is too weak. Use at least 6 characters.'
+
+        : 'Signup failed. Please try again.';
+
+      setError(msg);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
   };
+
+
 
   const handleGoogleSignup = async () => {
+
     setError('');
+
     setLoading(true);
+
     try {
+
       await googleLogin();
+
       navigate('/app');
+
     } catch (err) {
+
       if (err.code !== 'auth/popup-closed-by-user') {
+
         setError('Google signup failed. Please try again.');
+
       }
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
+
+
   return (
-    <div className="min-h-screen bg-[#FDFDF8] flex items-center justify-center px-4">
+
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+
       <div className="w-full max-w-md">
-        {/* Logo */}
+
         <div className="text-center mb-8">
+
           <Link to="/">
-            <img src={logo} alt="MoodScout" className="h-10 mx-auto mb-4" />
+
+            <Logo aria-label="MoodScout" className="h-10 mx-auto mb-4" />
+
           </Link>
-          <h1 className="text-2xl font-bold text-[#1D1F20]">Create your account</h1>
-          <p className="text-[#5D5F60] mt-1">Save searches and sync across devices</p>
+
+          <h1 className="text-2xl font-bold text-on-surface">Create your account</h1>
+
+          <p className="text-on-surface-variant mt-1">Save searches and sync across devices</p>
+
         </div>
 
-        {/* Card */}
-        <div className="bg-white border border-[#E0DCCE] rounded-2xl p-8 shadow-sm">
-          {/* Google Signup */}
+
+
+        <div className="bg-white border border-[#D4CFC0] rounded-2xl p-8 shadow-sm dark:bg-surface-elevated dark:border-outline/10">
+
           <button
+
             onClick={handleGoogleSignup}
+
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-[#D4CFC0] rounded-xl text-[#1D1F20] font-medium hover:bg-[#EEEFE9] transition-colors disabled:opacity-50"
+
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-[#C5BFAE] rounded-xl text-on-surface font-medium hover:bg-[#F8F7F2] transition-colors disabled:opacity-50 dark:border-outline/30 dark:hover:bg-surface-container-low"
+
           >
+
             <svg className="w-5 h-5" viewBox="0 0 24 24">
+
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+
             </svg>
+
             Continue with Google
+
           </button>
 
-          {/* Divider */}
+
+
           <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-[#E0DCCE]"></div>
-            <span className="px-3 text-sm text-[#5D5F60]">or</span>
-            <div className="flex-1 border-t border-[#E0DCCE]"></div>
+
+            <div className="flex-1 border-t border-outline/10"></div>
+
+            <span className="px-3 text-sm text-on-surface-variant">or</span>
+
+            <div className="flex-1 border-t border-outline/10"></div>
+
           </div>
 
-          {/* Signup Form */}
+
+
           <form onSubmit={handleSignup} className="space-y-4">
+
             <div>
-              <label className="block text-sm font-medium text-[#3D3F40] mb-1.5">Name</label>
+
+              <label className="block text-sm font-medium text-on-surface-variant mb-1.5">Name</label>
+
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#5D5F60]" />
+
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-on-surface-variant" />
+
                 <input
+
                   type="text"
+
                   value={displayName}
+
                   onChange={(e) => setDisplayName(e.target.value)}
+
                   placeholder="Your name"
-                  className="w-full pl-10 pr-4 py-2.5 border border-[#D4CFC0] rounded-xl text-[#1D1F20] placeholder-[#9D9F9E] focus:outline-none focus:ring-2 focus:ring-[#EB9D2A]/40 focus:border-[#EB9D2A] transition-colors"
+
+                  className={inputClass}
+
                 />
+
               </div>
+
             </div>
 
+
+
             <div>
-              <label className="block text-sm font-medium text-[#3D3F40] mb-1.5">Email</label>
+
+              <label className="block text-sm font-medium text-on-surface-variant mb-1.5">Email</label>
+
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#5D5F60]" />
+
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-on-surface-variant" />
+
                 <input
+
                   type="email"
+
                   value={email}
+
                   onChange={(e) => setEmail(e.target.value)}
+
                   placeholder="you@example.com"
+
                   required
-                  className="w-full pl-10 pr-4 py-2.5 border border-[#D4CFC0] rounded-xl text-[#1D1F20] placeholder-[#9D9F9E] focus:outline-none focus:ring-2 focus:ring-[#EB9D2A]/40 focus:border-[#EB9D2A] transition-colors"
+
+                  className={inputClass}
+
                 />
+
               </div>
+
             </div>
 
+
+
             <div>
-              <label className="block text-sm font-medium text-[#3D3F40] mb-1.5">Password</label>
+
+              <label className="block text-sm font-medium text-on-surface-variant mb-1.5">Password</label>
+
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#5D5F60]" />
+
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-on-surface-variant" />
+
                 <input
+
                   type={showPassword ? 'text' : 'password'}
+
                   value={password}
+
                   onChange={(e) => setPassword(e.target.value)}
+
                   placeholder="At least 6 characters"
+
                   required
-                  className="w-full pl-10 pr-10 py-2.5 border border-[#D4CFC0] rounded-xl text-[#1D1F20] placeholder-[#9D9F9E] focus:outline-none focus:ring-2 focus:ring-[#EB9D2A]/40 focus:border-[#EB9D2A] transition-colors"
+
+                  className={`${inputClass} pr-10`}
+
                 />
+
                 <button
+
                   type="button"
+
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5D5F60] hover:text-[#1D1F20]"
+
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
+
                 >
+
                   {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+
                 </button>
+
               </div>
+
             </div>
 
+
+
             <div>
-              <label className="block text-sm font-medium text-[#3D3F40] mb-1.5">Confirm Password</label>
+
+              <label className="block text-sm font-medium text-on-surface-variant mb-1.5">Confirm Password</label>
+
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#5D5F60]" />
+
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-on-surface-variant" />
+
                 <input
+
                   type={showPassword ? 'text' : 'password'}
+
                   value={confirmPassword}
+
                   onChange={(e) => setConfirmPassword(e.target.value)}
+
                   placeholder="Confirm your password"
+
                   required
-                  className="w-full pl-10 pr-4 py-2.5 border border-[#D4CFC0] rounded-xl text-[#1D1F20] placeholder-[#9D9F9E] focus:outline-none focus:ring-2 focus:ring-[#EB9D2A]/40 focus:border-[#EB9D2A] transition-colors"
+
+                  className={inputClass}
+
                 />
+
               </div>
+
             </div>
+
+
 
             {error && (
-              <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">
+
+              <div className="flex items-center gap-2 text-sm rounded-lg px-3 py-2 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400">
+
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
+
                 {error}
+
               </div>
+
             )}
 
+
+
             <button
+
               type="submit"
+
               disabled={loading}
-              className="w-full py-2.5 bg-[#EB9D2A] text-[#1D1F20] font-semibold rounded-xl
-                         hover:bg-[#CD8407] hover:shadow-md active:scale-[0.98]
-                         transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+
+              className="w-full py-2.5 bg-primary text-on-primary font-semibold rounded-xl hover:opacity-90 hover:shadow-md active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+
             >
+
               {loading ? 'Creating account…' : 'Create Account'}
+
             </button>
+
           </form>
 
-          {/* Login link */}
-          <p className="text-center text-sm text-[#5D5F60] mt-6">
+
+
+          <p className="text-center text-sm text-on-surface-variant mt-6">
+
             Already have an account?{' '}
-            <Link to="/login" className="text-[#EB9D2A] font-medium hover:underline">
+
+            <Link to="/login" className="text-primary font-medium hover:underline">
+
               Sign in
+
             </Link>
+
           </p>
+
         </div>
 
-        {/* Back to home */}
-        <p className="text-center text-sm text-[#5D5F60] mt-4">
-          <Link to="/" className="hover:text-[#EB9D2A] transition-colors">
+
+
+        <p className="text-center text-sm text-on-surface-variant mt-4">
+
+          <Link to="/" className="hover:text-primary transition-colors">
+
             ← Back to MoodScout
+
           </Link>
+
         </p>
+
       </div>
+
     </div>
+
   );
+
 }
+
+

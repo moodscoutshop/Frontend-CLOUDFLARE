@@ -46,14 +46,14 @@ export function ScrollToTopButton() {
         md:bottom-8 md:right-8
         w-10 h-10
         sm:w-12 sm:h-12
-        bg-[#EB9D2A] hover:bg-[#B17816]
-        text-white
+        bg-primary hover:bg-border-amber
+        text-on-primary
         rounded-full
         shadow-lg hover:shadow-xl
         flex items-center justify-center
         transition-all duration-300 ease-out
         transform hover:scale-110
-        focus:outline-none focus:ring-2 focus:ring-[#EB9D2A] focus:ring-offset-2
+        focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
       "
       aria-label="Scroll to top"
     >

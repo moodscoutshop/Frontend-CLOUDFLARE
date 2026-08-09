@@ -136,26 +136,26 @@ export function TabNavigation({ activeTab, onTabChange, searchType }) {
     `;
     
     if (state === 'disabled') {
-      return `${baseStyles} text-gray-400 cursor-not-allowed opacity-60`;
+      return `${baseStyles} text-on-surface-variant cursor-not-allowed opacity-60`;
     }
     
     if (isActive) {
       // Active tab - amber/orange primary button style
-      return `${baseStyles} bg-[#EB9D2A] text-[#1D1F20] border border-[#B17816] shadow-[0_2px_0_0_#CD8407] cursor-default`;
+      return `${baseStyles} bg-primary text-on-primary-strong border border-border-amber shadow-btn-primary cursor-default`;
     }
     
     if (state === 'completed') {
-      // Completed - white with border, hover pops up
-      return `${baseStyles} bg-white text-[#1D1F20] border border-[#D4CFC0] hover:-translate-y-0.5 hover:shadow-md cursor-pointer`;
+      // Completed - elevated card surface, hover pops up
+      return `${baseStyles} bg-surface-elevated text-on-surface border border-[#C5BFAE] dark:border-outline/15 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/50 cursor-pointer`;
     }
     
     if (state === 'loading') {
-      // Loading - light section background
-      return `${baseStyles} bg-[#EEEFE9] text-[#3D3F40] border border-[#D4CFC0] cursor-pointer`;
+      // Loading - mid container surface
+      return `${baseStyles} bg-surface-container-low text-on-surface-variant border border-outline/20 cursor-pointer`;
     }
     
     // Default/pending
-    return `${baseStyles} bg-[#EEEFE9] text-[#5D5F60] border border-[#E0DCCE] hover:bg-[#E8E4D9] cursor-pointer`;
+    return `${baseStyles} bg-surface-container-low text-on-surface-variant border border-[#C5BFAE] dark:border-outline/15 hover:bg-surface-bright/40 cursor-pointer`;
   };
   
   return (
@@ -168,7 +168,7 @@ export function TabNavigation({ activeTab, onTabChange, searchType }) {
             flex items-center gap-1.5 sm:gap-2 py-2
             overflow-x-auto scrollbar-hide
             -webkit-overflow-scrolling-touch
-            bg-[#EEEFE9] sm:rounded-b-lg border-b border-x border-t border-[#E0DCCE] px-3
+            bg-surface-container-low sm:rounded-b-lg border-b border-x border-t border-[#D4CFC0] dark:border-outline/15 px-3
           "
           style={{
             scrollbarWidth: 'none',
@@ -196,7 +196,7 @@ export function TabNavigation({ activeTab, onTabChange, searchType }) {
                 
                 {/* Loading Indicator */}
                 {state === 'loading' && (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#EB9D2A]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
                 )}
                 
                 {/* Completed Indicator - removed per user request, active/disabled states are self-explanatory */}
@@ -206,12 +206,12 @@ export function TabNavigation({ activeTab, onTabChange, searchType }) {
               {showTooltip === tab.id && (
                 <div className="
                   absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50
-                  px-3 py-2 text-xs text-white bg-[#1D1F20] rounded-md
-                  shadow-lg whitespace-nowrap border border-[#3D3F40]
+                  px-3 py-2 text-xs text-inverse-on-surface bg-inverse-surface rounded-md
+                  shadow-lg whitespace-nowrap border border-outline/30
                 ">
                   {tooltipMessage}
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0">
-                    <div className="w-2 h-2 bg-[#1D1F20] rotate-45 transform translate-y-1" />
+                    <div className="w-2 h-2 bg-inverse-surface rotate-45 transform translate-y-1" />
                   </div>
                 </div>
               )}
@@ -221,8 +221,8 @@ export function TabNavigation({ activeTab, onTabChange, searchType }) {
         
         {/* Total Time Badge - commented out: timer now lives in GlassProgressBar */}
         {/* {allTabsLoaded && processingTime && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 ml-auto bg-white text-[#1D1F20] rounded-md text-sm font-medium whitespace-nowrap border border-[#D4CFC0]">
-            <Clock className="w-3.5 h-3.5 text-[#EB9D2A]" />
+          <div className="flex items-center gap-1.5 px-3 py-1.5 ml-auto bg-surface-elevated text-on-surface rounded-md text-sm font-medium whitespace-nowrap border border-outline/10">
+            <Clock className="w-3.5 h-3.5 text-primary" />
             <span className="hidden sm:inline">Total:</span>
             <span>{formatTime(processingTime)}</span>
           </div>
@@ -231,8 +231,8 @@ export function TabNavigation({ activeTab, onTabChange, searchType }) {
       </div>
       
       {/* Gradient fade edges for scroll indication */}
-      <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-[#EEEFE9] to-transparent pointer-events-none sm:hidden" />
-      <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#EEEFE9] to-transparent pointer-events-none sm:hidden" />
+      <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-surface-container-low to-transparent pointer-events-none sm:hidden" />
+      <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-surface-container-low to-transparent pointer-events-none sm:hidden" />
     </div>
   );
 }
@@ -256,7 +256,7 @@ export function TimingDisplay({
   
   if (isComplete && completedTime) {
     return (
-      <div className="flex items-center gap-2 text-sm text-green-700 bg-white px-3 py-1.5 rounded-md border border-[#D4CFC0]">
+      <div className="flex items-center gap-2 text-sm text-accent-green bg-surface-elevated px-3 py-1.5 rounded-md border border-outline/10">
         <Check className="w-4 h-4" />
         <span>Completed in {formatTime(completedTime)}</span>
       </div>
@@ -266,12 +266,12 @@ export function TimingDisplay({
   if (isLoading) {
     return (
       <div className="flex items-center gap-3 text-sm">
-        <div className="flex items-center gap-2 text-[#EB9D2A] bg-white px-3 py-1.5 rounded-md border border-[#D4CFC0]">
+        <div className="flex items-center gap-2 text-primary bg-surface-elevated px-3 py-1.5 rounded-md border border-outline/10">
           <Loader2 className="w-3 h-3 animate-spin" />
           <span>{formatTime(elapsedTime)} elapsed</span>
         </div>
         {estimatedTime && (
-          <span className="text-[#5D5F60]">
+          <span className="text-on-surface-variant">
             ~{formatTime(Math.max(0, estimatedTime - elapsedTime))} remaining
           </span>
         )}

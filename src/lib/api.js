@@ -93,6 +93,12 @@ export const adminAPI = {
   processWithdrawal: (token, id, status, adminNotes, paymentReference) => api.put(`/api/admin/withdrawals/${id}`, {
     status, adminNotes, paymentReference
   }, { headers: { Authorization: `Admin ${token}` } }),
+  approveAllWithdrawals: (token, withdrawalIds) => api.post('/api/admin/withdrawals/approve-all', {
+    withdrawalIds
+  }, { headers: { Authorization: `Admin ${token}` } }),
+  updateUserWithdrawalMode: (token, userId, mode) => api.put(`/api/admin/users/${userId}/withdrawal-mode`, {
+    mode
+  }, { headers: { Authorization: `Admin ${token}` } }),
   getSystemSettings: (token) => api.get('/api/admin/settings', {
     headers: { Authorization: `Admin ${token}` }
   }),
@@ -131,6 +137,9 @@ export const referralAPI = {
     api.get('/api/referral/creator/chart', { params: { granularity, startDate, endDate } }),
   requestWithdrawal: (amount) => api.post('/api/referral/creator/withdraw', { amount }),
   getWithdrawals: () => api.get('/api/referral/creator/withdrawals'),
+  initiateConnectOnboarding: (returnPath) => api.post('/api/referral/payout/connect/onboard', { returnPath }),
+  getConnectStatus: () => api.get('/api/referral/payout/connect/status'),
+  openConnectPayoutManagement: () => api.post('/api/referral/payout/connect/manage'),
 
   // Notifications
   getNotifications: (unread) => api.get('/api/referral/notifications', { params: { unread } }),
@@ -144,6 +153,8 @@ export const shopifyAffiliateAPI = {
   submitApplication: (data) => api.post('/api/shopify-affiliates/apply', data),
   getApplications: () => api.get('/api/shopify-affiliates/applications'),
   getDashboard: () => api.get('/api/shopify-affiliates/dashboard'),
+  getWithdrawals: () => api.get('/api/shopify-affiliates/withdrawals'),
+  requestWithdrawal: (amount) => api.post('/api/shopify-affiliates/withdrawals', { amount }),
   getCode: () => api.get('/api/shopify-affiliates/code'),
   setCode: (referralCode) => api.put('/api/shopify-affiliates/code', { referralCode }),
 };

@@ -680,24 +680,28 @@ function TransactionsTab() {
 function WithdrawalsTab() {
   const { fetchAdmin } = useAdminAPI();
   const [withdrawals, setWithdrawals] = useState([]);
+  const [program, setProgram] = useState('influencer');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [batchResult, setBatchResult] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchAdmin('/api/admin/withdrawals');
+      const data = await fetchAdmin(program === 'developer' ? '/api/admin/developer-withdrawals' : '/api/admin/withdrawals');
       setWithdrawals(data.withdrawals || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [fetchAdmin]);
+  }, [fetchAdmin, program]);
 
   useEffect(() => { load(); }, [load]);
 
   const process = async (id, status) => {
     setActionLoading(id);
+    setBatchResult(null);
     try {
-      await fetchAdmin(`/api/admin/withdrawals/${id}`, {
+      await fetchAdmin(`${program === 'developer' ? '/api/admin/developer-withdrawals' : '/api/admin/withdrawals'}/${id}`, {
         method: 'PUT',
         body: JSON.stringify({ status, notes: '' }),
       });
@@ -706,23 +710,92 @@ function WithdrawalsTab() {
     finally { setActionLoading(null); }
   };
 
+  const handleApproveAll = async () => {
+    if (program === 'developer') return;
+    const pendingItems = withdrawals.filter(w => w.status === 'pending');
+    if (pendingItems.length === 0) return;
+
+    if (!window.confirm(`Are you sure you want to approve and process ALL ${pendingItems.length} pending withdrawals via Stripe?`)) {
+      return;
+    }
+
+    setBatchLoading(true);
+    setBatchResult(null);
+    try {
+      const pendingIds = pendingItems.map(w => w.id);
+      const res = await fetchAdmin('/api/admin/withdrawals/approve-all', {
+        method: 'POST',
+        body: JSON.stringify({ withdrawalIds: pendingIds, adminNotes: 'Approved all via Admin Panel' }),
+      });
+      setBatchResult({
+        type: 'success',
+        text: `Batch processing complete: ${res.successful || 0} succeeded, ${res.failed || 0} failed.`,
+      });
+      load();
+    } catch (err) {
+      setBatchResult({ type: 'error', text: err.message || 'Failed to approve all withdrawals.' });
+    } finally {
+      setBatchLoading(false);
+    }
+  };
+
   if (loading) return <LoadingState />;
+
+  const pendingCount = withdrawals.filter(w => w.status === 'pending').length;
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-white">Withdrawal Requests ({withdrawals.length})</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#2A2C2E] border border-[#3A3C3E] rounded-xl p-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            {['influencer', 'developer'].map((item) => <button key={item} onClick={() => setProgram(item)} className={`text-xs px-2.5 py-1 rounded-full capitalize ${program === item ? 'bg-[#EB9D2A] text-[#1D1F20]' : 'bg-[#3A3C3E] text-gray-300'}`}>{item === 'influencer' ? 'Influencer' : 'Shopify developer'}</button>)}
+          </div>
+          <h2 className="text-lg font-semibold text-white">{program === 'developer' ? 'Shopify Developer' : 'Influencer'} Withdrawal Requests ({withdrawals.length})</h2>
+          <p className="text-xs text-gray-400">
+            {pendingCount > 0 ? `${pendingCount} pending approval` : 'No pending approval requests'}
+          </p>
+        </div>
+        {program === 'influencer' && pendingCount > 0 && (
+          <button
+            onClick={handleApproveAll}
+            disabled={batchLoading}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-md transition-colors disabled:opacity-50"
+          >
+            {batchLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <DollarSign className="w-3.5 h-3.5" />}
+            Approve All Pending ({pendingCount})
+          </button>
+        )}
+      </div>
+
+      {batchResult && (
+        <div className={`p-3 rounded-lg text-xs flex items-center gap-2 ${
+          batchResult.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'
+        }`}>
+          <Check className="w-4 h-4 shrink-0" />
+          <span>{batchResult.text}</span>
+        </div>
+      )}
+
       {withdrawals.length === 0 ? (
         <p className="text-gray-500 text-sm py-4">No withdrawal requests yet.</p>
       ) : (
         <div className="space-y-2">
           {withdrawals.map(w => (
-            <div key={w.id} className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
+            <div key={w.id} className="bg-[#2A2C2E] border border-[#3A3C3E] rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-white">${parseFloat(w.amount).toFixed(2)}</div>
-                  <div className="text-xs text-gray-400">User ID: {w.creator_user_id}</div>
+                  <div className="text-base font-bold text-white">${parseFloat(w.amount).toFixed(2)}</div>
+                  <div className="text-xs text-gray-300">
+                    {program === 'developer' ? (w.developer_name || 'Developer') : (w.creator_name || 'Creator')} <span className="text-gray-500">({program === 'developer' ? (w.developer_email || `ID: ${w.developer_user_id}`) : (w.creator_email || `ID: ${w.creator_user_id}`)})</span>
+                  </div>
+                  {w.stripe_account_id && (
+                    <div className="text-[11px] font-mono text-indigo-400">Stripe ID: {w.stripe_account_id}</div>
+                  )}
+                  {w.stripe_transfer_id && (
+                    <div className="text-[11px] font-mono text-emerald-400">Transfer Ref: {w.stripe_transfer_id}</div>
+                  )}
                 </div>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                   w.status === 'completed' ? 'bg-green-500/20 text-green-400' :
                   w.status === 'approved' ? 'bg-blue-500/20 text-blue-400' :
                   w.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
@@ -731,28 +804,21 @@ function WithdrawalsTab() {
                   {w.status}
                 </span>
               </div>
-              <div className="text-xs text-gray-600">{new Date(w.created_at).toLocaleString()}</div>
+              <div className="text-[11px] text-gray-500">{new Date(w.created_at).toLocaleString()}</div>
 
               {w.status === 'pending' && (
-                <div className="flex gap-2 pt-2">
-                  <button
-                    onClick={() => process(w.id, 'approved')}
-                    disabled={actionLoading === w.id}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500/20 text-xs font-medium disabled:opacity-50"
-                  >
-                    <Check className="w-3.5 h-3.5" /> Approve
-                  </button>
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-[#3A3C3E]/50">
                   <button
                     onClick={() => process(w.id, 'completed')}
                     disabled={actionLoading === w.id}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 text-xs font-medium disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 rounded-lg hover:bg-emerald-600/30 text-xs font-medium disabled:opacity-50"
                   >
-                    <DollarSign className="w-3.5 h-3.5" /> Mark Paid
+                    <DollarSign className="w-3.5 h-3.5" /> Approve & Pay via Stripe
                   </button>
                   <button
                     onClick={() => process(w.id, 'rejected')}
                     disabled={actionLoading === w.id}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 text-xs font-medium disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 text-xs font-medium disabled:opacity-50"
                   >
                     <XIcon className="w-3.5 h-3.5" /> Reject
                   </button>
@@ -855,7 +921,7 @@ function ReferralOverviewTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#3A3C3E]">
-                  {['Influencer', 'Referral Code', 'Code Cooldown', 'Commission', 'Secondary Referrer', 'Earnings', 'Joined'].map((h) => (
+                  {['Influencer', 'Referral Code', 'Code Cooldown', 'Payout Mode', 'Commission', 'Secondary Referrer', 'Earnings', 'Joined'].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -880,6 +946,29 @@ function ReferralOverviewTab() {
                         daysLeft={parseInt(inf.cooldown_remaining_days) || 0}
                         totalDays={parseInt(inf.cooldown_days) || 30}
                       />
+                    </td>
+                    {/* Payout Mode */}
+                    <td className="px-4 py-3">
+                      <select
+                        value={inf.withdrawal_approval_mode || 'default'}
+                        onChange={async (e) => {
+                          const mode = e.target.value;
+                          try {
+                            await fetchAdmin(`/api/admin/users/${inf.id}/withdrawal-mode`, {
+                              method: 'PUT',
+                              body: JSON.stringify({ mode }),
+                            });
+                            setInfluencers(prev => prev.map(item => item.id === inf.id ? { ...item, withdrawal_approval_mode: mode } : item));
+                          } catch (err) {
+                            console.error('Failed to update user withdrawal mode:', err);
+                          }
+                        }}
+                        className="bg-[#1D1F20] border border-[#3A3C3E] text-xs text-gray-300 rounded px-2 py-1 focus:outline-none focus:border-[#EB9D2A]"
+                      >
+                        <option value="default">System Default</option>
+                        <option value="auto">Auto-Approve</option>
+                        <option value="manual">Manual-Approve</option>
+                      </select>
                     </td>
                     {/* Commission */}
                     <td className="px-4 py-3">
@@ -967,6 +1056,7 @@ function SystemSettingsTab() {
     min_withdrawal_amount: 'Min Withdrawal ($)',
     referral_code_cooldown_days: 'Code Cooldown (days)',
     default_referral_code: 'Default Referral Code',
+    withdrawal_approval_mode: 'Global Withdrawal Mode (manual/auto)',
   };
 
   return (

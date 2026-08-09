@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Database, Cookie, Share2, Lock, Mail, Globe, Clock3 } from 'lucide-react';
 import { Navbar, Footer } from '../components/layout';
+import { WaitlistModal } from '../components/modals';
 import { usePattern } from '../context/PatternContext';
 
 // Pattern imports (match landing page aesthetic)
@@ -18,18 +19,19 @@ const CONTACT_EMAIL = 'moodscoutshop@gmail.com';
 
 function PolicySection({ id, title, icon, children }) {
   return (
-    <section id={id} className="bg-white border border-[#E0DCCE] rounded-lg p-5 sm:p-6 shadow-sm scroll-mt-28">
-      <h2 className="text-xl sm:text-2xl font-bold text-[#1D1F20] mb-4 flex items-center gap-2">
+    <section id={id} className="bg-white border border-[#D4CFC0] rounded-lg p-5 sm:p-6 shadow-sm scroll-mt-28 dark:bg-surface-elevated dark:border-outline/20">
+      <h2 className="text-xl sm:text-2xl font-bold text-on-surface mb-4 flex items-center gap-2">
         {icon}
         {title}
       </h2>
-      <div className="text-[#3D3F40] leading-relaxed space-y-3 text-sm sm:text-base">{children}</div>
+      <div className="text-on-surface-variant leading-relaxed space-y-3 text-sm sm:text-base">{children}</div>
     </section>
   );
 }
 
 export function PrivacyPolicyPage() {
   const { currentPattern } = usePattern();
+  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
 
   const patternMap = {
     'endless-clouds': endlessClouds,
@@ -43,7 +45,7 @@ export function PrivacyPolicyPage() {
   const patternHeight = currentPattern?.height || 60;
 
   return (
-    <div className="bg-[#FDFDF8] min-h-screen font-sans relative">
+    <div className="bg-background min-h-screen font-sans relative">
       <div
         className="fixed inset-0 z-0 pointer-events-none"
         style={{
@@ -58,28 +60,32 @@ export function PrivacyPolicyPage() {
       />
 
       <div className="relative z-10">
-        <Navbar />
+        <Navbar onFeedbackClick={() => setShowWaitlistModal(true)} />
+        <WaitlistModal isOpen={showWaitlistModal} onClose={() => setShowWaitlistModal(false)} />
 
-        <main className="pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 sm:px-6">
+        <main
+          className="pb-12 sm:pb-16 px-4 sm:px-6"
+          style={{ paddingTop: 'calc(var(--ms-header-height, 6rem) + 1rem)' }}
+        >
           <div className="max-w-6xl mx-auto">
-            <div className="bg-white border border-[#E0DCCE] rounded-lg p-6 sm:p-8 shadow-sm mb-6 sm:mb-8">
-              <div className="inline-flex items-center gap-2 bg-[#EEEFE9] border border-[#D4CFC0] rounded-md px-3 py-1 text-xs sm:text-sm font-medium text-[#3D3F40]">
-                <ShieldCheck className="w-4 h-4 text-[#EB9D2A]" />
+            <div className="bg-white border border-[#D4CFC0] rounded-lg p-6 sm:p-8 shadow-sm mb-6 sm:mb-8 dark:bg-surface-elevated dark:border-outline/20">
+              <div className="inline-flex items-center gap-2 bg-surface-section border border-outline rounded-md px-3 py-1 text-xs sm:text-sm font-medium text-on-surface-variant">
+                <ShieldCheck className="w-4 h-4 text-primary" />
                 Public privacy policy for Shopify App Store listing requirements
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#1D1F20] mt-4 mb-4">Privacy Policy</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-on-surface mt-4 mb-4">Privacy Policy</h1>
 
-              <p className="text-[#5D5F60] text-sm sm:text-base leading-relaxed max-w-4xl">
+              <p className="text-on-surface-variant text-sm sm:text-base leading-relaxed max-w-4xl">
                 This Privacy Policy explains how {COMPANY_NAME} collects, uses, shares, and protects personal information when
                 using the MoodScout website and related services, including MoodScout integrations and apps made available to
                 merchants.
               </p>
 
               <div className="grid md:grid-cols-1 gap-3 mt-6">
-                <div className="bg-[#FDFDF8] border border-[#E0DCCE] rounded-md p-3">
-                  <p className="text-xs uppercase tracking-wide text-[#5D5F60] mb-1">Last updated</p>
-                  <p className="text-sm font-semibold text-[#1D1F20]">{LAST_UPDATED}</p>
+                <div className="bg-[#FDFDF8] border border-[#C5BFAE] rounded-md p-3 dark:bg-surface-container-low dark:border-outline/25">
+                  <p className="text-xs uppercase tracking-wide text-on-surface-variant mb-1">Last updated</p>
+                  <p className="text-sm font-semibold text-on-surface">{LAST_UPDATED}</p>
                 </div>
               </div>
 
@@ -91,22 +97,22 @@ export function PrivacyPolicyPage() {
             </div>
 
             <div className="grid lg:grid-cols-[240px_1fr] gap-6 sm:gap-8">
-              <aside className="lg:sticky lg:top-24 h-fit bg-white border border-[#E0DCCE] rounded-lg p-4 sm:p-5 shadow-sm">
-                <h2 className="text-sm font-bold uppercase tracking-wide text-[#5D5F60] mb-3">On this page</h2>
+              <aside className="lg:sticky lg:top-24 h-fit bg-white border border-[#D4CFC0] rounded-lg p-4 sm:p-5 shadow-sm dark:bg-surface-elevated dark:border-outline/20">
+                <h2 className="text-sm font-bold uppercase tracking-wide text-on-surface-variant mb-3">On this page</h2>
                 <nav className="space-y-2 text-sm">
-                  <a className="block text-[#3D3F40] hover:text-[#EB9D2A] transition-colors" href="#scope">Scope</a>
-                  <a className="block text-[#3D3F40] hover:text-[#EB9D2A] transition-colors" href="#data-we-collect">Information we collect</a>
-                  <a className="block text-[#3D3F40] hover:text-[#EB9D2A] transition-colors" href="#how-we-use-data">How we use data</a>
-                  <a className="block text-[#3D3F40] hover:text-[#EB9D2A] transition-colors" href="#sharing">Sharing and disclosure</a>
-                  <a className="block text-[#3D3F40] hover:text-[#EB9D2A] transition-colors" href="#retention">Data retention</a>
-                  <a className="block text-[#3D3F40] hover:text-[#EB9D2A] transition-colors" href="#security">Security</a>
-                  <a className="block text-[#3D3F40] hover:text-[#EB9D2A] transition-colors" href="#rights">Your rights</a>
-                  <a className="block text-[#3D3F40] hover:text-[#EB9D2A] transition-colors" href="#contact">Contact</a>
+                  <a className="block text-on-surface-variant hover:text-primary transition-colors" href="#scope">Scope</a>
+                  <a className="block text-on-surface-variant hover:text-primary transition-colors" href="#data-we-collect">Information we collect</a>
+                  <a className="block text-on-surface-variant hover:text-primary transition-colors" href="#how-we-use-data">How we use data</a>
+                  <a className="block text-on-surface-variant hover:text-primary transition-colors" href="#sharing">Sharing and disclosure</a>
+                  <a className="block text-on-surface-variant hover:text-primary transition-colors" href="#retention">Data retention</a>
+                  <a className="block text-on-surface-variant hover:text-primary transition-colors" href="#security">Security</a>
+                  <a className="block text-on-surface-variant hover:text-primary transition-colors" href="#rights">Your rights</a>
+                  <a className="block text-on-surface-variant hover:text-primary transition-colors" href="#contact">Contact</a>
                 </nav>
               </aside>
 
               <div className="space-y-5 sm:space-y-6">
-                <PolicySection id="scope" title="Scope" icon={<Globe className="w-5 h-5 text-[#EB9D2A]" />}>
+                <PolicySection id="scope" title="Scope" icon={<Globe className="w-5 h-5 text-primary" />}>
                   <p>
                     This policy applies to data collected through the MoodScout website, Shopify app integrations, and related
                     support communications.
@@ -117,7 +123,7 @@ export function PrivacyPolicyPage() {
                   </p>
                 </PolicySection>
 
-                <PolicySection id="data-we-collect" title="Information We Collect" icon={<Database className="w-5 h-5 text-[#EB9D2A]" />}>
+                <PolicySection id="data-we-collect" title="Information We Collect" icon={<Database className="w-5 h-5 text-primary" />}>
                   <p>Depending on usage and granted permissions, we may collect:</p>
                   <ul className="list-disc pl-5 space-y-2">
                     <li>
@@ -137,16 +143,16 @@ export function PrivacyPolicyPage() {
                     </li>
                   </ul>
 
-                  <div className="bg-[#EEEFE9] border border-[#D4CFC0] rounded-md p-3 mt-3">
-                    <p className="text-sm text-[#3D3F40] font-medium flex items-start gap-2">
-                      <Cookie className="w-4 h-4 mt-0.5 text-[#B17816]" />
+                  <div className="bg-surface-section border border-outline rounded-md p-3 mt-3">
+                    <p className="text-sm text-on-surface-variant font-medium flex items-start gap-2">
+                      <Cookie className="w-4 h-4 mt-0.5 text-border-amber" />
                       MoodScout may use cookies, local storage, and similar technologies for login sessions, security,
                       preferences, analytics, and performance.
                     </p>
                   </div>
                 </PolicySection>
 
-                <PolicySection id="how-we-use-data" title="How We Use Data" icon={<Clock3 className="w-5 h-5 text-[#EB9D2A]" />}>
+                <PolicySection id="how-we-use-data" title="How We Use Data" icon={<Clock3 className="w-5 h-5 text-primary" />}>
                   <p>We use personal information to:</p>
                   <ul className="list-disc pl-5 space-y-2">
                     <li>Provide, maintain, and improve MoodScout services and app functionality.</li>
@@ -160,7 +166,7 @@ export function PrivacyPolicyPage() {
                   </p>
                 </PolicySection>
 
-                <PolicySection id="sharing" title="Sharing and Disclosure" icon={<Share2 className="w-5 h-5 text-[#EB9D2A]" />}>
+                <PolicySection id="sharing" title="Sharing and Disclosure" icon={<Share2 className="w-5 h-5 text-primary" />}>
                   <p>We share data only when necessary, including with:</p>
                   <ul className="list-disc pl-5 space-y-2">
                     <li>Infrastructure, analytics, and communications providers that support MoodScout operations.</li>
@@ -173,7 +179,7 @@ export function PrivacyPolicyPage() {
                   </p>
                 </PolicySection>
 
-                <PolicySection id="retention" title="Data Retention" icon={<Clock3 className="w-5 h-5 text-[#EB9D2A]" />}>
+                <PolicySection id="retention" title="Data Retention" icon={<Clock3 className="w-5 h-5 text-primary" />}>
                   <p>
                     We retain information only for as long as needed to provide services, satisfy legal and financial obligations,
                     resolve disputes, and enforce agreements.
@@ -183,7 +189,7 @@ export function PrivacyPolicyPage() {
                   </p>
                 </PolicySection>
 
-                <PolicySection id="security" title="Security" icon={<Lock className="w-5 h-5 text-[#EB9D2A]" />}>
+                <PolicySection id="security" title="Security" icon={<Lock className="w-5 h-5 text-primary" />}>
                   <p>
                     We apply reasonable administrative, technical, and organizational safeguards designed to protect personal
                     information from unauthorized access, alteration, loss, misuse, or disclosure.
@@ -194,7 +200,7 @@ export function PrivacyPolicyPage() {
                   </p>
                 </PolicySection>
 
-                <PolicySection id="rights" title="Your Rights and Choices" icon={<ShieldCheck className="w-5 h-5 text-[#EB9D2A]" />}>
+                <PolicySection id="rights" title="Your Rights and Choices" icon={<ShieldCheck className="w-5 h-5 text-primary" />}>
                   <p>
                     Depending on your location, applicable laws may provide rights such as access, correction, deletion,
                     restriction, portability, and objection to certain processing.
@@ -205,7 +211,7 @@ export function PrivacyPolicyPage() {
                   </p>
                 </PolicySection>
 
-                <PolicySection id="contact" title="Contact" icon={<Mail className="w-5 h-5 text-[#EB9D2A]" />}>
+                <PolicySection id="contact" title="Contact" icon={<Mail className="w-5 h-5 text-primary" />}>
                   <p>
                     For privacy questions, requests, or complaints, contact:
                   </p>
@@ -214,7 +220,7 @@ export function PrivacyPolicyPage() {
                     Email:{' '}
                     <a
                       href={`mailto:${CONTACT_EMAIL}`}
-                      className="text-[#B17816] hover:text-[#EB9D2A] transition-colors"
+                      className="text-border-amber hover:text-primary transition-colors"
                     >
                       {CONTACT_EMAIL}
                     </a>
@@ -229,7 +235,7 @@ export function PrivacyPolicyPage() {
           </div>
         </main>
 
-        <Footer />
+        <Footer onFeedbackClick={() => setShowWaitlistModal(true)} />
       </div>
     </div>
   );

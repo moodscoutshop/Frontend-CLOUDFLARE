@@ -1,8 +1,9 @@
 import React, { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSearch } from '../context/SearchContext';
-import { ResultsNavbar } from '../components/layout';
+import { ResultsNavbar, Footer } from '../components/layout';
 import { ScrollToTopButton } from '../components/common';
+import { WaitlistModal } from '../components/modals';
 import { 
   TabNavigation, 
   PinterestTab,
@@ -21,6 +22,7 @@ export function ResultsPage() {
   const location = useLocation();
   const hasInitiatedSearch = useRef(false);
   const lastSearchKeyRef = useRef('');
+  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   
   const {
     searchQuery,
@@ -1006,7 +1008,7 @@ export function ResultsPage() {
   };
   
   return (
-    <div className="bg-[#EEEFE9] min-h-screen font-sans">
+    <div className="bg-background min-h-screen font-sans">
       {/* Results Navbar with Search - Fixed at top */}
       <ResultsNavbar onNewSearch={handleNewSearch} />
       
@@ -1029,6 +1031,9 @@ export function ResultsPage() {
       
       {/* Scroll to Top Button */}
       <ScrollToTopButton />
+
+      <Footer onFeedbackClick={() => setShowWaitlistModal(true)} />
+      <WaitlistModal isOpen={showWaitlistModal} onClose={() => setShowWaitlistModal(false)} />
     </div>
   );
 }

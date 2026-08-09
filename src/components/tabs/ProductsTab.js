@@ -11,16 +11,18 @@ import { GlassProgressBar, KeywordEditor, ReSearchButton } from '../common';
 import { useReferralCode } from '../../hooks/useReferralCode';
 import { ReferralCodeModal } from '../modals/ReferralCodeModal';
 
-// Predefined palette for condition badges — distinct, accessible colors
+// Predefined palette for condition badges — theme-aware where tokens exist
 const CONDITION_COLORS = [
-  { bg: '#36C46F', text: '#FFFFFF' },   // Green - typically "New"
-  { bg: '#2F80FA', text: '#FFFFFF' },   // Blue - typically "Open Box"
-  { bg: '#B62AD9', text: '#FFFFFF' },   // Purple - typically "Certified Refurbished"
-  { bg: '#EB9D2A', text: '#FFFFFF' },   // Amber - typically "Pre-Owned"
-  { bg: '#E60023', text: '#FFFFFF' },   // Red - typically "For Parts"
-  { bg: '#0D7C5F', text: '#FFFFFF' },   // Teal - typically "Good - Refurbished"
-  { bg: '#1D4AFF', text: '#FFFFFF' },   // Deep blue
-  { bg: '#D4541C', text: '#FFFFFF' },   // Burnt orange
+  // Theme-aware accents use dark ink for >=4.5:1 in both themes (white fails on L~0.7+ fills)
+  { bg: 'oklch(var(--c-accent-green))', text: 'rgb(var(--c-on-primary-strong))' },
+  { bg: 'oklch(var(--c-accent-blue))', text: 'rgb(var(--c-on-primary-strong))' },
+  { bg: 'oklch(var(--c-accent-purple))', text: 'rgb(var(--c-on-primary-strong))' },
+  { bg: 'rgb(var(--c-primary))', text: 'rgb(var(--c-on-primary-strong))' },
+  // Fixed brand/categorical fills are dark enough for white text
+  { bg: '#E60023', text: '#FFFFFF' },
+  { bg: '#0D7C5F', text: '#FFFFFF' },
+  { bg: '#1D4AFF', text: '#FFFFFF' },
+  { bg: '#D4541C', text: '#FFFFFF' },
 ];
 
 // Placeholder image for products without images
@@ -122,7 +124,7 @@ function KeywordFilterDropdown({
   const dropdownClasses = `
     absolute min-w-[16rem] max-w-[min(24rem,90vw)] max-h-80
     overflow-y-auto overflow-x-hidden
-    bg-[#FDFDF8] rounded-lg shadow-xl border border-[#D4CFC0] z-50
+    bg-surface-container-low rounded-lg shadow-xl border border-outline/10 z-50
     ${position.direction === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'}
     ${alignClass}
   `;
@@ -136,8 +138,8 @@ function KeywordFilterDropdown({
           inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all duration-200
           text-sm
           ${selectedKeywords.length > 0 
-            ? 'bg-[#EB9D2A]/15 border-[#EB9D2A] text-[#B17816]' 
-            : 'bg-white border-[#D4CFC0] text-[#3D3F40] hover:border-[#EB9D2A]'
+            ? 'bg-primary/15 border-primary text-border-amber' 
+            : 'bg-white border-[#C5BFAE] text-on-surface-variant hover:border-primary dark:bg-surface-elevated dark:border-outline/20'
           }
         `}
       >
@@ -157,16 +159,16 @@ function KeywordFilterDropdown({
       {isOpen && (
         <div ref={panelRef} className={dropdownClasses}>
           {/* Header */}
-          <div className="sticky top-0 bg-[#FDFDF8] px-4 py-3 border-b border-[#D4CFC0]">
+          <div className="sticky top-0 bg-surface-container-low px-4 py-3 border-b border-outline/10">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-[#1D1F20]">Filter by Keyword</span>
+              <span className="font-semibold text-on-surface">Filter by Keyword</span>
               {selectedKeywords.length > 0 && (
                 <button
                   onClick={() => {
                     onClearAll();
                     setIsOpen(false);
                   }}
-                  className="text-xs text-[#EB9D2A] hover:text-[#CD8407] font-medium"
+                  className="text-xs text-primary hover:text-shadow-amber font-medium"
                 >
                   Clear all
                 </button>
@@ -184,15 +186,15 @@ function KeywordFilterDropdown({
                   onClick={() => onToggle(keyword)}
                   className={`
                     w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-left
-                    ${isSelected ? 'bg-[#EB9D2A]/15 text-[#B17816]' : 'hover:bg-[#EEEFE9] text-[#3D3F40]'}
+                    ${isSelected ? 'bg-primary/15 text-border-amber' : 'hover:bg-surface-section text-on-surface-variant'}
                   `}
                 >
                   <div className={`
                     w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0
-                    ${isSelected ? 'bg-[#EB9D2A] border-[#EB9D2A]' : 'border-[#D4CFC0]'}
+                    ${isSelected ? 'bg-primary border-primary' : 'bg-white border-[#C5BFAE] dark:bg-transparent dark:border-outline/20'}
                   `}>
                     {isSelected && (
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-3 h-3 text-on-primary-strong" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
@@ -254,7 +256,7 @@ function SortDropdown({ sortBy, sortOrder, onSortChange }) {
     position.alignment === 'right'  ? 'right-0' : 'left-0';
 
   const dropdownClasses = `
-    absolute min-w-[14rem] max-w-[90vw] bg-[#FDFDF8] rounded-lg shadow-xl border border-[#D4CFC0] z-50
+    absolute min-w-[14rem] max-w-[90vw] bg-surface-container-low rounded-lg shadow-xl border border-outline/10 z-50
     ${position.direction === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'}
     ${alignClass}
   `;
@@ -268,8 +270,8 @@ function SortDropdown({ sortBy, sortOrder, onSortChange }) {
           inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all duration-200
           text-sm
           ${sortBy !== 'default' 
-            ? 'bg-[#EB9D2A]/15 border-[#EB9D2A] text-[#B17816]' 
-            : 'bg-white border-[#D4CFC0] text-[#3D3F40] hover:border-[#EB9D2A]'
+            ? 'bg-primary/15 border-primary text-border-amber' 
+            : 'bg-white border-[#C5BFAE] text-on-surface-variant hover:border-primary dark:bg-surface-elevated dark:border-outline/20'
           }
         `}
       >
@@ -289,8 +291,8 @@ function SortDropdown({ sortBy, sortOrder, onSortChange }) {
                 className={`
                   w-full text-left px-4 py-2 rounded-lg transition-colors duration-150 text-sm
                   ${currentValue === option.value
-                    ? 'bg-[#EB9D2A]/15 text-[#B17816] font-medium'
-                    : 'text-[#3D3F40] hover:bg-[#EEEFE9]'
+                    ? 'bg-primary/15 text-border-amber font-medium'
+                    : 'text-on-surface-variant hover:bg-surface-section'
                   }
                 `}
               >
@@ -319,6 +321,22 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
   const isExpanded = expandedCards.has(productId);
   const isLoading = loadingRelevance.has(productId);
   const explanation = relevanceExplanations[productId];
+
+  const currentPriceValue = product.priceValue != null
+    ? Number(product.priceValue)
+    : (product.price ? parseFloat(String(product.price).replace(/[^0-9.]/g, '')) : NaN);
+  const originalPriceValue = product.originalPriceValue != null
+    ? Number(product.originalPriceValue)
+    : (product.originalPrice ? parseFloat(String(product.originalPrice).replace(/[^0-9.]/g, '')) : NaN);
+  const showOriginalPrice = Boolean(
+    product.originalPrice
+    && Number.isFinite(originalPriceValue)
+    && Number.isFinite(currentPriceValue)
+    && originalPriceValue > currentPriceValue
+    && (!product.priceTreatment
+      || product.priceTreatment === 'STRIKE_THROUGH'
+      || product.priceTreatment === 'MARKDOWN')
+  );
   
   const handleRelevanceClick = async (e) => {
     e.preventDefault();
@@ -384,7 +402,7 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
   };
   
   return (
-    <div className="group bg-[#FDFDF8] rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-[#D4CFC0] hover:border-[#EB9D2A] flex flex-col">
+    <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-[#D4CFC0] hover:border-primary flex flex-col dark:bg-surface-elevated dark:border-outline/15">
       {/* Product Image */}
       <a
         href={product.url || '#'}
@@ -398,7 +416,7 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
           }
         }}
       >
-        <div className="aspect-square relative overflow-hidden bg-[#EEEFE9]">
+        <div className="aspect-square relative overflow-hidden bg-surface-container-low">
           <img
             src={product.image || NO_IMAGE_PLACEHOLDER}
             alt={product.name}
@@ -415,7 +433,12 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
             <div
               className="absolute top-2 left-2 sm:top-3 sm:left-3 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded z-10 font-medium"
               style={{
-                backgroundColor: (conditionColorMap?.[product.condition]?.bg || '#E60023') + 'E6',
+                backgroundColor: (() => {
+                  const bg = conditionColorMap?.[product.condition]?.bg || '#E60023';
+                  // Hex colors get 8-digit alpha; CSS var colors use color-mix
+                  if (bg.startsWith('#') && bg.length === 7) return `${bg}E6`;
+                  return `color-mix(in oklch, ${bg} 90%, transparent)`;
+                })(),
                 color: conditionColorMap?.[product.condition]?.text || '#FFFFFF',
               }}
             >
@@ -423,13 +446,13 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
             </div>
           )}
           {product.match_score != null && (
-            <div className={`absolute z-10 bg-white/90 backdrop-blur-sm px-1.5 sm:px-2 py-0.5 sm:py-1 rounded flex items-center gap-1 shadow-sm ${
+            <div className={`absolute z-10 bg-surface-elevated/90 backdrop-blur-sm px-1.5 sm:px-2 py-0.5 sm:py-1 rounded flex items-center gap-1 shadow-sm ${
               product.condition
                 ? 'top-8 left-2 sm:top-3 sm:right-3 sm:left-auto'
                 : 'top-2 right-2 sm:top-3 sm:right-3'
             }`}>
-              <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#1D4AFF]" />
-              <span className="text-[10px] sm:text-xs font-semibold text-[#1D4AFF]">{product.match_score.toFixed(1)}%</span>
+              <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-accent-blue" />
+              <span className="text-[10px] sm:text-xs font-semibold text-accent-blue">{product.match_score.toFixed(1)}%</span>
             </div>
           )}
           
@@ -441,10 +464,10 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
               )}
               {product.score_breakdown && searchType === 'pinterest' && (
                 <div className="flex flex-wrap gap-1">
-                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-500/70 text-white rounded" title="Content">C:{product.score_breakdown.content}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-green-500/70 text-white rounded" title="Color">L:{product.score_breakdown.color}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-orange-500/70 text-white rounded" title="Category">Cat:{product.score_breakdown.category}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/70 text-white rounded" title="Theme">T:{product.score_breakdown.theme}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-500/90 dark:bg-blue-700/85 text-white rounded" title="Content">C:{product.score_breakdown.content}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-green-600/90 dark:bg-green-700/85 text-white rounded" title="Color">L:{product.score_breakdown.color}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-orange-500/90 dark:bg-orange-700/85 text-white rounded" title="Category">Cat:{product.score_breakdown.category}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/90 dark:bg-amber-800/85 text-white rounded" title="Theme">T:{product.score_breakdown.theme}</span>
                 </div>
               )}
             </div>
@@ -465,7 +488,7 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
             }
           }}
         >
-          <h4 className="font-semibold text-[#1D1F20] text-xs sm:text-sm line-clamp-2 group-hover:text-[#EB9D2A] transition-colors mb-1.5">
+          <h4 className="font-semibold text-on-surface text-xs sm:text-sm line-clamp-2 group-hover:text-primary transition-colors mb-1.5">
             {product.name || 'Untitled Product'}
           </h4>
         </a>
@@ -473,13 +496,23 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
         {/* Price + View on eBay row */}
         <div className="flex items-center justify-between gap-2 mb-1.5">
           {product.price ? (
-            <span className="text-sm sm:text-base font-bold text-black truncate">{product.price}</span>
-          ) : <span />}
+            <div className="flex items-baseline gap-1.5 flex-1 min-w-0">
+              {showOriginalPrice && (
+                <span className="text-xs text-on-surface-variant line-through flex-shrink-0">
+                  {product.originalPrice}
+                </span>
+              )}
+              <span className="text-sm sm:text-base font-bold text-on-surface truncate">
+                {product.price}
+              </span>
+            </div>
+          ) : <span className="flex-1 min-w-0" />}
           <a
             href={product.url || '#'}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-[#36C46F] text-xs sm:text-sm font-medium hover:text-[#01a354] transition-all flex-shrink-0 opacity-0 group-hover:opacity-100"
+            aria-label="View on eBay"
+            className="flex items-center gap-1 text-accent-green text-xs sm:text-sm font-medium hover:text-accent-green transition-all flex-shrink-0"
             onClick={(e) => {
               if (onProductClick) {
                 e.preventDefault();
@@ -488,7 +521,7 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
             }}
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">View on eBay</span>
+            <span className="hidden sm:group-hover:inline">View on eBay</span>
           </a>
         </div>
         
@@ -501,8 +534,8 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
             backdrop-blur-md border text-sm
             disabled:opacity-50 disabled:cursor-not-allowed
             ${isExpanded 
-              ? 'bg-[#EB9D2A]/15 text-[#B17816] shadow-lg border-[#EB9D2A]' 
-              : 'bg-white/60 text-[#3D3F40] hover:bg-[#EB9D2A]/10 hover:text-[#B17816] border-[#D4CFC0] hover:border-[#EB9D2A]'
+              ? 'bg-primary/15 text-border-amber shadow-lg border-primary' 
+              : 'bg-white text-on-surface-variant hover:bg-primary/10 hover:text-border-amber border-[#C5BFAE] hover:border-primary dark:bg-surface-elevated/60 dark:border-outline/20'
             }
           `}
         >
@@ -528,16 +561,16 @@ function ProductCard({ product, index, searchType, conditionColorMap, onProductC
         
         {/* Expanded Explanation */}
         {isExpanded && explanation && (
-          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[#D4CFC0] animate-fade-in">
+          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-outline/10 animate-fade-in">
             <div className="flex items-start gap-2 sm:gap-3">
               <div className="flex-shrink-0 mt-0.5">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-[#EB9D2A]/20 flex items-center justify-center">
-                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#EB9D2A]" />
+                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <h5 className="text-xs sm:text-sm font-semibold text-[#1D1F20] mb-1 sm:mb-2">AI Explanation</h5>
-                <p className="text-xs sm:text-sm text-[#5D5F60] leading-relaxed">{explanation}</p>
+                <h5 className="text-xs sm:text-sm font-semibold text-on-surface mb-1 sm:mb-2">AI Explanation</h5>
+                <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">{explanation}</p>
               </div>
             </div>
           </div>
@@ -699,42 +732,42 @@ export function ProductsTab({ onReSearchFromKeywords }) {
           {/* Toggle Header */}
           <button
             onClick={() => setShowAnalysis(!showAnalysis)}
-            className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white rounded-t-xl border border-[#D4CFC0] hover:bg-[#FDFDF8] transition-colors group"
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white rounded-t-xl border border-[#D4CFC0] hover:bg-[#F8F7F2] transition-colors group dark:bg-surface-elevated dark:border-outline/15 dark:hover:bg-surface-container-low"
             style={!showAnalysis ? { borderRadius: '0.75rem' } : {}}
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#B62AD9] to-[#2F80FA] rounded-lg flex items-center justify-center">
-                <Brain className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-br from-accent-purple to-accent-blue rounded-lg flex items-center justify-center">
+                <Brain className="w-4 h-4 text-white dark:text-on-primary-strong" />
               </div>
               <div className="text-left">
-                <h3 className="text-sm sm:text-base font-bold text-[#1D1F20]">AI Analysis</h3>
-                <p className="text-xs text-[#5D5F60]">
+                <h3 className="text-sm sm:text-base font-bold text-on-surface">AI Analysis</h3>
+                <p className="text-xs text-on-surface-variant">
                   {analysisData ? 'Understanding your aesthetic' : analysisLoading ? 'Analyzing...' : 'Pending'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               {analysisData && (
-                <span className="text-xs text-[#36C46F] font-medium bg-[#36C46F]/10 px-2 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1">
+                <span className="text-xs text-accent-green font-medium bg-accent-green/10 px-2 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1">
                   <span>✓</span> Complete
                 </span>
               )}
               {analysisLoading && (
-                <Loader2 className="w-4 h-4 animate-spin text-[#EB9D2A]" />
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
               )}
               {showAnalysis ? (
-                <ChevronUp className="w-5 h-5 text-[#5D5F60] group-hover:text-[#1D1F20] transition-colors" />
+                <ChevronUp className="w-5 h-5 text-on-surface-variant group-hover:text-on-surface transition-colors" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-[#5D5F60] group-hover:text-[#1D1F20] transition-colors" />
+                <ChevronDown className="w-5 h-5 text-on-surface-variant group-hover:text-on-surface transition-colors" />
               )}
             </div>
           </button>
 
           {/* Collapsible Content */}
           {showAnalysis && (
-            <div className="bg-white rounded-b-xl border border-t-0 border-[#D4CFC0] overflow-hidden animate-fade-in">
+            <div className="bg-white rounded-b-xl border border-t-0 border-[#D4CFC0] overflow-hidden animate-fade-in dark:bg-surface-elevated dark:border-outline/15">
               {/* Gradient Header Bar */}
-              <div className="h-1.5 bg-gradient-to-r from-[#B62AD9] via-[#2F80FA] to-[#36C46F]"></div>
+              <div className="h-1.5 bg-gradient-to-r from-accent-purple via-accent-blue to-accent-green"></div>
 
               {/* Loading State */}
               {analysisLoading && !analysisData && (
@@ -742,16 +775,16 @@ export function ProductsTab({ onReSearchFromKeywords }) {
                   <div className="space-y-6">
                     <div className="space-y-4">
                       <div className="flex gap-3">
-                        <div className="h-10 w-24 bg-[#EEEFE9] rounded-full" />
-                        <div className="h-10 w-28 bg-[#EEEFE9] rounded-full" />
+                        <div className="h-10 w-24 bg-surface-container-low rounded-full" />
+                        <div className="h-10 w-28 bg-surface-container-low rounded-full" />
                       </div>
-                      <div className="h-24 bg-[#EEEFE9] rounded-lg" />
+                      <div className="h-24 bg-surface-container-low rounded-lg" />
                     </div>
                     <div className="space-y-3">
-                      <div className="h-6 w-32 bg-[#EEEFE9] rounded" />
+                      <div className="h-6 w-32 bg-surface-container-low rounded" />
                       <div className="flex flex-wrap gap-2">
                         {[...Array(6)].map((_, i) => (
-                          <div key={i} className="h-8 w-20 bg-[#EEEFE9] rounded-full" />
+                          <div key={i} className="h-8 w-20 bg-surface-container-low rounded-full" />
                         ))}
                       </div>
                     </div>
@@ -766,26 +799,26 @@ export function ProductsTab({ onReSearchFromKeywords }) {
                     {/* Category, Theme, Summary */}
                     <div>
                       <div className="flex flex-wrap gap-3 mb-4">
-                        <span className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full bg-[#B62AD9]/15 text-[#B62AD9]">
+                        <span className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full bg-accent-purple/20 text-[#6B3FA0] border border-accent-purple/35 dark:text-accent-purple">
                           Category: {analysisData.category}
                         </span>
-                        <span className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full bg-[#2F80FA]/15 text-[#2F80FA]">
+                        <span className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full bg-accent-blue/20 text-[#2F5FA8] border border-accent-blue/35 dark:text-accent-blue">
                           Theme: {analysisData.theme}
                         </span>
                       </div>
-                      <p className="text-[#3D3F40] leading-relaxed text-sm">
+                      <p className="text-on-surface-variant leading-relaxed text-sm">
                         {analysisData.summary}
                       </p>
                     </div>
 
                     {/* Editable Keywords & Colors */}
-                    <div className="bg-[#FDFDF8] rounded-lg p-4 border border-[#E0DCCE]">
+                    <div className="bg-[#FDFDF8] rounded-lg p-4 border border-[#C5BFAE] dark:bg-surface-container-low dark:border-outline/20">
                       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-                        <h4 className="font-semibold text-[#1D1F20] flex items-center gap-2 text-sm">
-                          <Tag className="w-4 h-4 text-[#36C46F]" />
+                        <h4 className="font-semibold text-on-surface flex items-center gap-2 text-sm">
+                          <Tag className="w-4 h-4 text-accent-green" />
                           Keywords & Colors
                         </h4>
-                        <p className="text-xs text-[#5D5F60]/80 italic">
+                        <p className="text-xs text-on-surface-variant/80 italic">
                           Click any keyword to edit
                         </p>
                       </div>
@@ -805,13 +838,13 @@ export function ProductsTab({ onReSearchFromKeywords }) {
 
                       {/* Color Palette */}
                       {analysisData.color_palette && analysisData.color_palette.length > 0 && (
-                        <div className="pt-3 border-t border-[#E0DCCE]">
-                          <h5 className="text-sm font-medium text-[#5D5F60] mb-2">Color Palette</h5>
+                        <div className="pt-3 border-t border-outline-variant">
+                          <h5 className="text-sm font-medium text-on-surface-variant mb-2">Color Palette</h5>
                           <div className="flex flex-wrap gap-2">
                             {analysisData.color_palette.map((color, idx) => (
                               <span
                                 key={`color-${idx}`}
-                                className="inline-flex items-center gap-1 px-3 py-1 bg-[#2F80FA]/12 text-[#2F80FA] border border-[#2F80FA]/30 text-sm rounded-full"
+                                className="inline-flex items-center gap-1 px-3 py-1 bg-accent-blue/20 text-[#2F5FA8] border border-accent-blue/35 text-sm rounded-full dark:text-accent-blue"
                               >
                                 {color}
                               </span>
@@ -824,9 +857,9 @@ export function ProductsTab({ onReSearchFromKeywords }) {
 
                   {/* Re-search action bar */}
                   {keywordsModified && editedKeywords.length > 0 && (
-                    <div className="mt-5 pt-4 border-t border-[#E0DCCE] flex items-center justify-between gap-4">
-                      <p className="text-sm text-[#5D5F60]">
-                        <span className="font-medium text-[#1D1F20]">{editedKeywords.length}</span> keyword{editedKeywords.length !== 1 ? 's' : ''} (modified)
+                    <div className="mt-5 pt-4 border-t border-outline-variant flex items-center justify-between gap-4">
+                      <p className="text-sm text-on-surface-variant">
+                        <span className="font-medium text-on-surface">{editedKeywords.length}</span> keyword{editedKeywords.length !== 1 ? 's' : ''} (modified)
                       </p>
                       <ReSearchButton
                         label="Search Keywords"
@@ -842,8 +875,8 @@ export function ProductsTab({ onReSearchFromKeywords }) {
               {/* Empty State */}
               {!analysisLoading && !analysisData && (
                 <div className="text-center py-8">
-                  <Sparkles className="w-6 h-6 text-[#5D5F60] mx-auto mb-2" />
-                  <p className="text-sm text-[#5D5F60]">AI analysis will appear here once processing is complete.</p>
+                  <Sparkles className="w-6 h-6 text-on-surface-variant mx-auto mb-2" />
+                  <p className="text-sm text-on-surface-variant">AI analysis will appear here once processing is complete.</p>
                 </div>
               )}
             </div>
@@ -858,12 +891,12 @@ export function ProductsTab({ onReSearchFromKeywords }) {
         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 lg:gap-8">
             {/* Left: title */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="w-10 h-10 bg-[#EB9D2A] rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <ShoppingBag className="w-5 h-5 text-on-primary-strong" />
               </div>
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-[#1D1F20]">Matched Products</h2>
-                <p className="text-sm text-[#5D5F60]">
+                <h2 className="text-xl sm:text-2xl font-bold text-on-surface">Matched Products</h2>
+                <p className="text-sm text-on-surface-variant">
                   {filteredProducts.length === productsData?.length 
                     ? `${productsData?.length || 0} products found`
                     : `${filteredProducts.length} of ${productsData?.length} products`
@@ -903,18 +936,18 @@ export function ProductsTab({ onReSearchFromKeywords }) {
           
           {/* Active Filters Summary */}
           {hasActiveFilters && (
-          <div className="p-3 sm:p-4 bg-[#EB9D2A]/10 rounded-lg border border-[#EB9D2A]/30">
+          <div className="p-3 sm:p-4 bg-primary/10 rounded-lg border border-outline/10">
             <div className="flex flex-wrap items-center gap-2">
-              <Filter className="w-4 h-4 text-[#EB9D2A]" />
-              <span className="text-sm font-medium text-[#B17816]">Active:</span>
+              <Filter className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-border-amber">Active:</span>
               {selectedKeywordFilters.map((kw, idx) => (
                 <span 
                   key={`active-kw-${idx}`}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-[#EB9D2A]/20 text-[#B17816] text-xs rounded-full"
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-primary/20 text-border-amber text-xs rounded-full"
                 >
                   <Tag className="w-3 h-3" />
                   {kw}
-                  <button onClick={() => handleKeywordFilterToggle(kw)} className="hover:text-[#CD8407]">
+                  <button onClick={() => handleKeywordFilterToggle(kw)} className="hover:text-shadow-amber">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -922,17 +955,17 @@ export function ProductsTab({ onReSearchFromKeywords }) {
               {selectedCategoryFilters.map((cat, idx) => (
                 <span 
                   key={`active-cat-${idx}`}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-[#EEEFE9] text-[#3D3F40] text-xs rounded-full"
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-surface-container-low text-on-surface-variant text-xs rounded-full border border-[#C5BFAE] dark:border-outline/25"
                 >
                   {cat.split(' > ').pop()}
-                  <button onClick={() => handleCategoryFilterToggle(cat)} className="hover:text-[#1D1F20]">
+                  <button onClick={() => handleCategoryFilterToggle(cat)} className="hover:text-on-surface">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               ))}
               <button
                 onClick={clearAllFilters}
-                className="ml-2 text-xs text-[#EB9D2A] hover:text-[#CD8407] underline"
+                className="ml-2 text-xs text-primary hover:text-shadow-amber underline"
               >
                 Clear all
               </button>
@@ -946,11 +979,11 @@ export function ProductsTab({ onReSearchFromKeywords }) {
       {isLoading && (!productsData || productsData.length === 0) && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           {[...Array(8)].map((_, i) => (
-            <div key={`skeleton-${i}`} className="bg-[#FDFDF8] rounded-lg shadow-md overflow-hidden animate-pulse">
-              <div className="aspect-square bg-[#EEEFE9]" />
+            <div key={`skeleton-${i}`} className="bg-surface-elevated rounded-lg shadow-md overflow-hidden animate-pulse">
+              <div className="aspect-square bg-surface-container-low" />
               <div className="p-4 space-y-2">
-                <div className="h-4 bg-[#EEEFE9] rounded w-3/4" />
-                <div className="h-6 bg-[#EEEFE9] rounded w-1/4" />
+                <div className="h-4 bg-surface-container-low rounded w-3/4" />
+                <div className="h-6 bg-surface-container-low rounded w-1/4" />
               </div>
             </div>
           ))}
@@ -959,17 +992,17 @@ export function ProductsTab({ onReSearchFromKeywords }) {
       
       {/* No Results After Filtering */}
       {filteredProducts.length === 0 && hasActiveFilters && productsData?.length > 0 && (
-        <div className="text-center py-12 bg-[#FDFDF8] rounded-lg shadow-md border border-[#D4CFC0]">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-[#EB9D2A]/20 rounded-lg mb-4">
-            <Filter className="w-7 h-7 text-[#EB9D2A]" />
+        <div className="text-center py-12 bg-white rounded-lg shadow-md border border-[#D4CFC0] dark:bg-surface-elevated dark:border-outline/15">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-primary/20 rounded-lg mb-4">
+            <Filter className="w-7 h-7 text-primary" />
           </div>
-          <h3 className="text-xl font-semibold text-[#1D1F20] mb-2">No Products Match Your Filters</h3>
-          <p className="text-[#5D5F60] max-w-md mx-auto mb-4">
+          <h3 className="text-xl font-semibold text-on-surface mb-2">No Products Match Your Filters</h3>
+          <p className="text-on-surface-variant max-w-md mx-auto mb-4">
             Try adjusting your keyword or category filters to see more results.
           </p>
           <button
             onClick={clearAllFilters}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#EB9D2A] text-[#1D1F20] rounded-lg text-sm font-medium hover:bg-[#CD8407] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-on-primary-strong rounded-lg text-sm font-medium hover:bg-shadow-amber transition-colors"
           >
             <X className="w-4 h-4" />
             Clear All Filters
@@ -980,11 +1013,11 @@ export function ProductsTab({ onReSearchFromKeywords }) {
       {/* No Products Found */}
       {!isLoading && productsData && productsData.length === 0 && (
         <div className="text-center py-12">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-[#EEEFE9] rounded-lg mb-4">
-            <AlertCircle className="w-7 h-7 text-[#5D5F60]" />
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-surface-container-low rounded-lg mb-4">
+            <AlertCircle className="w-7 h-7 text-on-surface-variant" />
           </div>
-          <h3 className="text-xl font-semibold text-[#1D1F20] mb-2">No Results Found</h3>
-          <p className="text-[#5D5F60] max-w-md mx-auto">
+          <h3 className="text-xl font-semibold text-on-surface mb-2">No Results Found</h3>
+          <p className="text-on-surface-variant max-w-md mx-auto">
             {noResultsMessage || 'No matching products found. Try a different search or Pinterest board.'}
           </p>
         </div>
@@ -1030,8 +1063,8 @@ export function ProductsTab({ onReSearchFromKeywords }) {
                     inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold
                     transition-colors min-w-[12rem]
                     ${showMoreLoading || !analysisData?.contents?.length
-                      ? 'bg-[#EEEFE9] text-[#A0A2A3] cursor-not-allowed'
-                      : 'bg-[#EB9D2A] text-[#1D1F20] hover:bg-[#CD8407]'}
+                      ? 'bg-surface-container-low text-on-surface-variant/60 cursor-not-allowed'
+                      : 'bg-primary text-on-primary-strong hover:bg-shadow-amber'}
                   `}
                 >
                   {showMoreLoading ? (
@@ -1052,11 +1085,11 @@ export function ProductsTab({ onReSearchFromKeywords }) {
       {/* Empty State */}
       {!isLoading && !productsData && (
         <div className="text-center py-12">
-          <div className="w-14 h-14 bg-[#EEEFE9] rounded-lg flex items-center justify-center mx-auto mb-4">
-            <ShoppingBag className="w-7 h-7 text-[#5D5F60]" />
+          <div className="w-14 h-14 bg-surface-container-low rounded-lg flex items-center justify-center mx-auto mb-4">
+            <ShoppingBag className="w-7 h-7 text-on-surface-variant" />
           </div>
-          <h3 className="text-lg font-semibold text-[#3D3F40] mb-2">Products Loading</h3>
-          <p className="text-[#5D5F60]">Matched products will appear here once found.</p>
+          <h3 className="text-lg font-semibold text-on-surface-variant mb-2">Products Loading</h3>
+          <p className="text-on-surface-variant">Matched products will appear here once found.</p>
         </div>
       )}
 

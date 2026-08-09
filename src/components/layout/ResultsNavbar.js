@@ -2,11 +2,13 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { X, Menu, ArrowLeft, Plus, Camera, ChevronDown, Pencil, Search, Paperclip, Settings, LogIn, Gift, Sparkles, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import logo from '../../assets/logo.svg';
+import Logo from '../common/Logo';
 import { useSearch } from '../../context/SearchContext';
 import { useAuth } from '../../context/AuthContext';
-import { VisualSearchModal, SettingsModal, CreatorApplicationModal, DeveloperAffiliateApplicationModal, PrecisionSearchAuthModal } from '../modals';
+import { VisualSearchModal, SettingsModal, CreatorApplicationModal, DeveloperAffiliateApplicationModal, PrecisionSearchAuthModal, UnsupportedUrlModal } from '../modals';
+import { isUnsupportedUrl } from '../../lib/urlValidation';
 import { PrecisionSearchToggle } from '../common/PrecisionSearchToggle';
+import { ThemeToggleButton } from '../common/ThemeToggleButton';
 import Stack from '../common/Stack';
 import ImageGrid from '../common/ImageGrid';
 import { UserMenu } from '../common/UserMenu';
@@ -23,11 +25,29 @@ export function ResultsNavbar({ onNewSearch }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showVisualSearchModal, setShowVisualSearchModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsOpts, setSettingsOpts] = useState({
+    initialTab: 'referral',
+    initialMobilePane: 'menu',
+  });
   const [showCreatorApp, setShowCreatorApp] = useState(false);
   const [showDeveloperApp, setShowDeveloperApp] = useState(false);
   const [showPrecisionAuthModal, setShowPrecisionAuthModal] = useState(false);
+  const [unsupportedUrlValue, setUnsupportedUrlValue] = useState(null);
   const inputRef = useRef(null);
   const visualSearchRef = useRef(null);
+
+  const openSettings = (opts = {}) => {
+    setSettingsOpts({
+      initialTab: opts.initialTab || 'referral',
+      initialMobilePane: opts.initialMobilePane || 'menu',
+    });
+    setShowSettings(true);
+  };
+
+  const closeSettings = () => {
+    setShowSettings(false);
+    setSettingsOpts({ initialTab: 'referral', initialMobilePane: 'menu' });
+  };
   
   // Image queue state (like landing page)
   const [queuedImageFiles, setQueuedImageFiles] = useState([]);
@@ -52,12 +72,7 @@ export function ResultsNavbar({ onNewSearch }) {
     return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   }, []);
 
-  // Gate: only allow enabling precision search when logged in
   const handlePrecisionChange = (newValue) => {
-    if (newValue && !isAuthenticated) {
-      setShowPrecisionAuthModal(true);
-      return;
-    }
     setPrecisionSearch(newValue);
   };
   
@@ -264,6 +279,10 @@ export function ResultsNavbar({ onNewSearch }) {
     
     // Text/URL search
     if (localQuery.trim()) {
+      if (isUnsupportedUrl(localQuery)) {
+        setUnsupportedUrlValue(localQuery.trim());
+        return;
+      }
       setSearchQuery(localQuery);
       if (onNewSearch) {
         onNewSearch(localQuery);
@@ -301,13 +320,13 @@ export function ResultsNavbar({ onNewSearch }) {
           ].join(' ')}
           aria-hidden={!isDragActive}
         >
-          <div className="absolute inset-0 bg-[#EB9D2A]/10 backdrop-blur-[2px]" />
+          <div className="absolute inset-0 bg-primary/10 backdrop-blur-[2px]" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white/90 border border-[#D4CFC0] rounded-xl px-5 py-4 shadow-lg">
-              <p className="text-sm font-medium text-[#1D1F20] text-center">
+            <div className="bg-surface-container-low/95 border border-outline/10 rounded-xl px-5 py-4 shadow-lg">
+              <p className="text-sm font-medium text-on-surface text-center">
                 Drop images to add them to your search
               </p>
-              <p className="text-xs text-[#5D5F60] text-center mt-1">
+              <p className="text-xs text-on-surface-variant text-center mt-1">
                 JPEG, PNG, WebP, GIF • multiple files supported
               </p>
             </div>
@@ -321,21 +340,20 @@ export function ResultsNavbar({ onNewSearch }) {
             {/* Back Button - Mobile */}
             <button
               onClick={handleBackToHome}
-              className="sm:hidden p-1.5 rounded hover:bg-[#D4CFC0] transition-colors"
+              className="sm:hidden p-1.5 rounded hover:bg-surface-container-low transition-colors"
               aria-label="Back to home"
             >
-              <ArrowLeft className="w-4 h-4 text-[#1D1F20]" />
+              <ArrowLeft className="w-4 h-4 text-on-surface" />
             </button>
             
             {/* Logo - Hidden on mobile, shown on tablet+ */}
             <Link to="/" className="hidden sm:flex items-center gap-2 flex-shrink-0">
-              <img
-                src={logo}
-                alt="MoodScout"
+              <Logo
+                aria-label="MoodScout"
                 className="w-6 h-6 object-contain"
               />
-              <span className="hidden lg:block text-base font-bold text-[#1D1F20]">
-                MoodScout
+              <span className="hidden lg:block font-display-hero-mobile text-[18px] leading-none font-semibold tracking-tight text-on-surface">
+                Mood<span className="font-bold text-primary">Scout</span>
               </span>
             </Link>
             
@@ -346,7 +364,7 @@ export function ResultsNavbar({ onNewSearch }) {
                 onClick={() => setStackExpanded(!stackExpanded)}
               >
                 {queuedImagePreviews.length === 1 ? (
-                  <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded overflow-hidden border border-[#D4CFC0] bg-[#EEEFE9] shadow-sm">
+                  <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded overflow-hidden border border-[#C5BFAE] bg-surface-container-low shadow-sm dark:border-outline/35">
                     <img
                       src={queuedImagePreviews[0]}
                       alt=""
@@ -366,7 +384,7 @@ export function ResultsNavbar({ onNewSearch }) {
                       autoplay={false}
                       mobileClickOnly={true}
                       cards={queuedImagePreviews.slice(0, 4).map((src, i) => (
-                        <div key={i} className="w-full h-full rounded overflow-hidden border border-[#D4CFC0]">
+                        <div key={i} className="w-full h-full rounded overflow-hidden border border-[#C5BFAE] dark:border-outline/35">
                           <img
                             src={src}
                             alt=""
@@ -378,7 +396,7 @@ export function ResultsNavbar({ onNewSearch }) {
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded pointer-events-none">
                       <Pencil className="w-3.5 h-3.5 text-white" />
                     </div>
-                    <span className="absolute -bottom-1 -right-1 bg-[#EB9D2A] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                    <span className="absolute -bottom-1 -right-1 bg-primary text-on-primary text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                       {queuedImagePreviews.length}
                     </span>
                   </div>
@@ -406,7 +424,7 @@ export function ResultsNavbar({ onNewSearch }) {
                       type="button"
                       onClick={() => setPlusMenuOpen((v) => !v)}
                       disabled={isSearching}
-                      className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded bg-[#EEEFE9] hover:bg-[#E0DCCE] text-[#3D3F40] hover:text-[#1D1F20] transition-colors z-10 disabled:opacity-50"
+                      className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded bg-surface-container-low hover:bg-surface-bright text-on-surface-variant hover:text-on-surface transition-colors z-10 disabled:opacity-50 dark:bg-surface-container-low dark:hover:bg-surface-bright"
                       aria-label="More options"
                     >
                       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -414,7 +432,7 @@ export function ResultsNavbar({ onNewSearch }) {
 
                     {/* Plus dropdown menu - fixed positioning for proper display */}
                     {plusMenuOpen && (
-                      <div className="fixed left-auto top-auto mt-1 w-72 bg-white rounded-lg shadow-xl border border-[#D4CFC0] z-[100] py-2 animate-fade-in"
+                      <div className="fixed left-auto top-auto mt-1 w-72 bg-surface-container-low rounded-lg shadow-xl border border-outline/10 z-[100] py-2 animate-fade-in dark:bg-surface-container-low"
                            style={{
                              position: 'absolute',
                              left: '0',
@@ -428,14 +446,14 @@ export function ResultsNavbar({ onNewSearch }) {
                             fileInputRef.current?.click();
                             setPlusMenuOpen(false);
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-bright/40 transition-colors text-left"
                         >
-                          <div className="w-8 h-8 rounded-md bg-[#EB9D2A]/15 flex items-center justify-center flex-shrink-0">
-                            <Paperclip className="w-4 h-4 text-[#B17816]" />
+                          <div className="w-8 h-8 rounded-md bg-primary/15 flex items-center justify-center flex-shrink-0">
+                            <Paperclip className="w-4 h-4 text-border-amber" />
                           </div>
                           <div>
-                            <span className="font-medium text-[#1D1F20]">Attach Images</span>
-                            <p className="text-xs text-[#5D5F60]">Upload images from your device</p>
+                            <span className="font-medium text-on-surface">Attach Images</span>
+                            <p className="text-xs text-on-surface-variant">Upload images from your device</p>
                           </div>
                         </button>
 
@@ -454,18 +472,18 @@ export function ResultsNavbar({ onNewSearch }) {
                             cameraInput.click();
                             setPlusMenuOpen(false);
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#3D3F40] hover:bg-[#EEEFE9] transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-bright/40 transition-colors text-left"
                         >
-                          <div className="w-8 h-8 rounded-md bg-[#36C46F]/15 flex items-center justify-center flex-shrink-0">
-                            <Camera className="w-4 h-4 text-[#2A9D58]" />
+                          <div className="w-8 h-8 rounded-md bg-accent-green/15 flex items-center justify-center flex-shrink-0">
+                            <Camera className="w-4 h-4 text-accent-green" />
                           </div>
                           <div>
-                            <span className="font-medium text-[#1D1F20]">Take Photo</span>
-                            <p className="text-xs text-[#5D5F60]">Use your camera to capture an image</p>
+                            <span className="font-medium text-on-surface">Take Photo</span>
+                            <p className="text-xs text-on-surface-variant">Use your camera to capture an image</p>
                           </div>
                         </button>
 
-                        <div className="border-t border-[#EEEFE9] my-1" />
+                        <div className="border-t border-outline/10 my-1" />
 
                         {/* Precision Search toggle */}
                         <div className="px-4 py-2.5">
@@ -484,7 +502,7 @@ export function ResultsNavbar({ onNewSearch }) {
                     <button
                       type="button"
                       onClick={() => setStackExpanded(false)}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded bg-[#EEEFE9] hover:bg-[#E0DCCE] text-[#3D3F40] hover:text-[#1D1F20] transition-colors z-10"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded bg-surface-container-low hover:bg-surface-bright text-on-surface-variant hover:text-on-surface transition-colors z-10"
                       aria-label="Minimize"
                     >
                       <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -496,7 +514,7 @@ export function ResultsNavbar({ onNewSearch }) {
                     <button
                       type="button"
                       onClick={handleClear}
-                      className="absolute right-8 sm:right-9 top-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded bg-[#EEEFE9] hover:bg-[#E0DCCE] text-[#3D3F40] hover:text-[#1D1F20] transition-colors z-10"
+                      className="absolute right-8 sm:right-9 top-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded bg-surface-container-low hover:bg-surface-bright text-on-surface-variant hover:text-on-surface transition-colors z-10"
                       aria-label="Clear"
                     >
                       <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -507,7 +525,7 @@ export function ResultsNavbar({ onNewSearch }) {
                   <button
                     type="submit"
                     disabled={isSearching || (!localQuery.trim() && !hasQueuedImages)}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded bg-[#EB9D2A] hover:bg-[#CD8407] disabled:bg-[#D4CFC0] disabled:cursor-not-allowed text-white transition-colors z-20"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded bg-primary hover:bg-shadow-amber disabled:bg-outline/40 disabled:cursor-not-allowed text-on-primary-strong transition-colors z-20"
                     aria-label="Search"
                   >
                     <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -522,12 +540,13 @@ export function ResultsNavbar({ onNewSearch }) {
                     disabled={isSearching || hasQueuedImages}
                     className={`
                       w-full py-1.5 pl-9 sm:pl-10 text-sm
-                      bg-white border border-[#D4CFC0] rounded
-                      focus:border-[#EB9D2A] focus:ring-1 focus:ring-[#EB9D2A]
+                      bg-surface-elevated border border-outline/35 rounded
+                      dark:bg-surface-bright dark:border-outline/35
+                      focus:border-primary focus:ring-1 focus:ring-primary/40
                       outline-none transition-all
                       disabled:opacity-50 disabled:cursor-not-allowed
-                      text-[#1D1F20] placeholder-[#5D5F60]
-                      ${hasQueuedImages ? 'bg-[#EEEFE9]' : ''}
+                      text-on-surface placeholder-on-surface-variant
+                      ${hasQueuedImages ? 'bg-surface-container-low dark:bg-surface-container-low' : ''}
                       ${localQuery && !hasQueuedImages ? 'pr-[60px] sm:pr-[68px]' : 'pr-9 sm:pr-10'}
                     `}
                   />
@@ -542,17 +561,17 @@ export function ResultsNavbar({ onNewSearch }) {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute left-0 right-0 top-full mt-2 bg-white border border-[#D4CFC0] rounded-lg shadow-xl z-[100] overflow-hidden"
+                    className="absolute left-0 right-0 top-full mt-2 bg-surface-container-low border border-[#D4CFC0] rounded-lg shadow-xl z-[100] overflow-hidden dark:border-outline/25"
                   >
                     <div className="p-3 sm:p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium text-[#1D1F20]">
+                        <span className="text-sm font-medium text-on-surface">
                           {queuedImagePreviews.length} image{queuedImagePreviews.length > 1 ? 's' : ''} selected
                         </span>
                         <button
                           type="button"
                           onClick={clearAllImages}
-                          className="text-xs text-[#5D5F60] hover:text-[#1D1F20] underline transition-colors"
+                          className="text-xs text-on-surface-variant hover:text-on-surface underline transition-colors"
                         >
                           Clear all
                         </button>
@@ -565,7 +584,7 @@ export function ResultsNavbar({ onNewSearch }) {
                         minImageSize={56}
                         gap={8}
                         renderImage={(item, index, size) => (
-                          <div className="group/img relative w-full h-full rounded-lg overflow-hidden border border-[#D4CFC0] bg-[#EEEFE9]">
+                          <div className="group/img relative w-full h-full rounded-lg overflow-hidden border border-[#C5BFAE] bg-surface-elevated dark:border-outline/35">
                             <img
                               src={item.src}
                               alt={item.alt || ''}
@@ -578,7 +597,7 @@ export function ResultsNavbar({ onNewSearch }) {
                                 e.stopPropagation();
                                 removeQueuedImage(index);
                               }}
-                              className="absolute top-1 right-1 w-6 h-6 rounded-md bg-white/90 hover:bg-white text-[#1D1F20] flex items-center justify-center shadow-sm border border-[#D4CFC0] transition-all opacity-0 group-hover/img:opacity-100"
+                              className="absolute top-1 right-1 w-6 h-6 rounded-md bg-surface-bright/90 hover:bg-surface-bright text-on-surface flex items-center justify-center shadow-sm border border-outline/20 transition-all opacity-0 group-hover/img:opacity-100"
                               aria-label="Remove image"
                             >
                               <X className="w-3.5 h-3.5" />
@@ -587,7 +606,7 @@ export function ResultsNavbar({ onNewSearch }) {
                         )}
                       />
                       
-                      <p className="text-xs text-[#5D5F60] text-center mt-3">
+                      <p className="text-xs text-on-surface-variant text-center mt-3">
                         Press Enter to search
                       </p>
                     </div>
@@ -607,57 +626,58 @@ export function ResultsNavbar({ onNewSearch }) {
             <div className="hidden sm:block relative group">
               <button
                 type="button"
-                onClick={() => {
-                  if (!precisionSearch && !isAuthenticated) {
-                    setShowPrecisionAuthModal(true);
-                    return;
-                  }
-                  setPrecisionSearch(!precisionSearch);
-                }}
+                onClick={() => setPrecisionSearch(!precisionSearch)}
                 className={`
                   flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all
                   ${precisionSearch 
-                    ? 'bg-[#EB9D2A]/15 text-[#B17816] border border-[#EB9D2A]' 
-                    : 'text-[#3D3F40] hover:text-[#1D1F20] hover:bg-[#EEEFE9] border border-transparent'}
+                    ? 'bg-primary/15 text-border-amber border border-primary' 
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low border border-transparent'}
                 `}
               >
                 <span className={`
-                  relative inline-flex h-4 w-7 items-center rounded-full transition-colors
-                  ${precisionSearch ? 'bg-[#EB9D2A]' : 'bg-[#D4CFC0]'}
+                  relative inline-flex h-4 w-7 items-center rounded-full border transition-colors
+                  ${precisionSearch
+                    ? 'border-glowing-orange/50 bg-glowing-orange/15'
+                    : 'border-[#C5BFAE] bg-surface-container dark:border-outline/20'}
                 `}>
                   <span className={`
-                    inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform
+                    inline-block h-3 w-3 transform rounded-full bg-glowing-orange shadow-[0_0_8px_rgb(var(--c-primary)/0.35)] transition-transform
                     ${precisionSearch ? 'translate-x-3' : 'translate-x-0.5'}
                   `} />
                 </span>
                 <span className="hidden md:inline">Precision</span>
               </button>
-              {/* Tooltip on hover */}
-              <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-white border border-[#D4CFC0] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                <p className="text-xs text-[#5D5F60] leading-relaxed">
-                  <span className="font-semibold text-[#1D1F20]">Precision Search:</span> Generates highly specific product descriptions (model, style, details) instead of general terms. May return fewer results if exact products are unavailable.
+              {/* Tooltip on hover — theme-aware */}
+              <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg border border-outline/10 bg-surface-container-low p-3 shadow-xl opacity-0 invisible transition-all group-hover:visible group-hover:opacity-100">
+                <p className="text-xs leading-relaxed text-on-surface-variant">
+                  <span className="font-semibold text-on-surface">Precision Search:</span> Generates highly specific product descriptions (model, style, details) instead of general terms. May return fewer results if exact products are unavailable.
                 </p>
               </div>
             </div>
             
             {/* Desktop: Reward who sent you */}
             <button
-              onClick={() => setShowSettings(true)}
-              className="hidden sm:flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md border border-[#EB9D2A]/40 text-[#B17816] bg-[#EB9D2A]/5 hover:bg-[#EB9D2A]/15 transition-colors flex-shrink-0"
+              onClick={() => openSettings()}
+              className="hidden sm:flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md border border-secondary/20 bg-secondary/5 text-secondary hover:bg-secondary/10 transition-colors flex-shrink-0"
             >
               <Gift className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Reward who sent you</span>
             </button>
 
+            {/* Desktop: Theme toggle */}
+            <div className="hidden sm:block flex-shrink-0">
+              <ThemeToggleButton className="h-9 w-9" />
+            </div>
+
             {/* Desktop: Sign In (unauthenticated) or User Menu (authenticated) */}
             {isAuthenticated ? (
               <div className="hidden sm:block flex-shrink-0">
-                <UserMenu onSettingsClick={() => setShowSettings(true)} />
+                <UserMenu onSettingsClick={() => openSettings()} />
               </div>
             ) : (
               <Link
                 to="/login"
-                className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-[#3D3F40] hover:text-[#EB9D2A] transition-colors px-2 py-1.5 rounded hover:bg-[#EEEFE9] flex-shrink-0"
+                className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-on-surface-variant hover:text-primary transition-colors px-2 py-1.5 rounded hover:bg-surface-container-low flex-shrink-0"
               >
                 <LogIn className="w-4 h-4" />
                 <span className="hidden md:inline">Sign In</span>
@@ -667,52 +687,57 @@ export function ResultsNavbar({ onNewSearch }) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="sm:hidden p-2 rounded-md hover:bg-[#D4CFC0] transition-colors"
+              className="sm:hidden p-2 rounded-md hover:bg-surface-container-low transition-colors"
             >
               {mobileMenuOpen ? (
-                <X className="w-5 h-5 text-[#1D1F20]" />
+                <X className="w-5 h-5 text-on-surface" />
               ) : (
-                <Menu className="w-5 h-5 text-[#1D1F20]" />
+                <Menu className="w-5 h-5 text-on-surface" />
               )}
             </button>
           </div>
           
           {/* Mobile Menu Dropdown */}
           {mobileMenuOpen && (
-            <div className="sm:hidden mt-3 pt-3 border-t border-[#D4CFC0]">
+            <div className="sm:hidden mt-3 pt-3 border-t border-outline/10">
+              {/* Mobile: Theme toggle */}
+              <div className="flex items-center justify-between px-2 py-2 mb-1">
+                <span className="text-sm font-medium text-on-surface-variant">Theme</span>
+                <ThemeToggleButton className="h-9 w-9" />
+              </div>
+
               {/* Mobile: Precision Search Toggle */}
               <button
-                onClick={() => {
-                  if (!precisionSearch && !isAuthenticated) {
-                    setShowPrecisionAuthModal(true);
-                    return;
-                  }
-                  setPrecisionSearch(!precisionSearch);
-                }}
+                onClick={() => setPrecisionSearch(!precisionSearch)}
                 className={`
                   flex items-center gap-2 w-full py-2 font-medium transition-colors
-                  ${precisionSearch ? 'text-[#B17816]' : 'text-[#3D3F40] hover:text-[#1D1F20]'}
+                  ${precisionSearch ? 'text-border-amber' : 'text-on-surface-variant hover:text-on-surface'}
                 `}
               >
                 <span className={`
-                  relative inline-flex h-4 w-7 items-center rounded-full transition-colors
-                  ${precisionSearch ? 'bg-[#EB9D2A]' : 'bg-[#D4CFC0]'}
+                  relative inline-flex h-4 w-7 items-center rounded-full border transition-colors
+                  ${precisionSearch
+                    ? 'border-glowing-orange/50 bg-glowing-orange/15'
+                    : 'border-[#C5BFAE] bg-surface-container dark:border-outline/20'}
                 `}>
                   <span className={`
-                    inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform
+                    inline-block h-3 w-3 transform rounded-full bg-glowing-orange shadow-[0_0_8px_rgb(var(--c-primary)/0.35)] transition-transform
                     ${precisionSearch ? 'translate-x-3' : 'translate-x-0.5'}
                   `} />
                 </span>
                 Precision Search {precisionSearch && '(ON)'}
               </button>
-              <p className="text-xs text-[#5D5F60] mt-1 ml-9">
+              <p className="text-xs text-on-surface-variant mt-1 ml-9">
                 Generate specific product descriptions
               </p>
 
-              {/* Mobile: Reward who sent you (always visible) */}
+              {/* Mobile: Reward who sent you — open referral detail directly */}
               <button
-                onClick={() => { setMobileMenuOpen(false); setShowSettings(true); }}
-                className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#B17816] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] px-2 rounded transition-colors border-t border-[#D4CFC0]/50 mt-2 pt-2"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openSettings({ initialTab: 'referral', initialMobilePane: 'detail' });
+                }}
+                className="flex items-center gap-2 w-full py-2 text-sm font-medium text-secondary hover:bg-secondary/10 px-2 rounded transition-colors border-t border-outline/10 mt-2 pt-2"
               >
                 <Gift className="w-4 h-4" />
                 Reward who sent you
@@ -721,24 +746,24 @@ export function ResultsNavbar({ onNewSearch }) {
               {isAuthenticated ? (
                 <>
                   {/* Profile row */}
-                  <div className="flex items-center gap-2 px-2 py-2 border-t border-[#D4CFC0]/50 mt-2 pt-2">
+                  <div className="flex items-center gap-2 px-2 py-2 border-t border-outline/10 mt-2 pt-2">
                     {currentUser?.photoURL ? (
                       <img src={currentUser.photoURL} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
                     ) : (
-                      <div className="w-7 h-7 rounded-full bg-[#EB9D2A] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-on-primary text-xs font-bold flex-shrink-0">
                         {(currentUser?.displayName?.[0] || currentUser?.email?.[0] || 'U').toUpperCase()}
                       </div>
                     )}
                     <div className="min-w-0">
-                      <div className="text-xs font-semibold text-[#1D1F20] truncate">
+                      <div className="text-xs font-semibold text-on-surface truncate">
                         {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User'}
                       </div>
-                      <div className="text-[10px] text-[#5D5F60] truncate">{currentUser?.email}</div>
+                      <div className="text-[10px] text-on-surface-variant truncate">{currentUser?.email}</div>
                     </div>
                   </div>
                   <button
-                    onClick={() => { setMobileMenuOpen(false); setShowSettings(true); }}
-                    className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
+                    onClick={() => { setMobileMenuOpen(false); openSettings(); }}
+                    className="flex items-center gap-2 w-full py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low px-2 rounded transition-colors mt-1"
                   >
                     <Settings className="w-4 h-4" />
                     Settings
@@ -747,7 +772,7 @@ export function ResultsNavbar({ onNewSearch }) {
                     <Link
                       to="/creator/dashboard"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
+                      className="flex items-center gap-2 w-full py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low px-2 rounded transition-colors mt-1"
                     >
                       <Sparkles className="w-4 h-4" />
                       Influencer Dashboard
@@ -757,7 +782,7 @@ export function ResultsNavbar({ onNewSearch }) {
                     <Link
                       to="/developer/dashboard"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#3D3F40] hover:text-[#EB9D2A] hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
+                      className="flex items-center gap-2 w-full py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low px-2 rounded transition-colors mt-1"
                     >
                       <Store className="w-4 h-4" />
                       Developer Dashboard
@@ -765,7 +790,7 @@ export function ResultsNavbar({ onNewSearch }) {
                   )}
                   <button
                     onClick={() => { setMobileMenuOpen(false); logout(); }}
-                    className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#5D5F60] hover:text-red-500 hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
+                    className="flex items-center gap-2 w-full py-2 text-sm font-medium text-on-surface-variant hover:text-red-500 hover:bg-surface-container-low px-2 rounded transition-colors mt-1"
                   >
                     <LogIn className="w-4 h-4 rotate-180" />
                     Sign Out
@@ -774,7 +799,7 @@ export function ResultsNavbar({ onNewSearch }) {
               ) : (
                 <Link
                   to="/login"
-                  className="flex items-center gap-2 w-full py-2 text-sm font-medium text-[#EB9D2A] hover:bg-[#EEEFE9] px-2 rounded transition-colors mt-1"
+                  className="flex items-center gap-2 w-full py-2 text-sm font-medium text-primary hover:bg-surface-container-low px-2 rounded transition-colors mt-1"
                 >
                   <LogIn className="w-4 h-4" />
                   Sign In
@@ -786,12 +811,22 @@ export function ResultsNavbar({ onNewSearch }) {
       </nav>
 
       {/* Modals — rendered outside nav to avoid stacking context issues */}
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={closeSettings}
+        initialTab={settingsOpts.initialTab}
+        initialMobilePane={settingsOpts.initialMobilePane}
+      />
       <CreatorApplicationModal isOpen={showCreatorApp} onClose={() => setShowCreatorApp(false)} />
       <DeveloperAffiliateApplicationModal isOpen={showDeveloperApp} onClose={() => setShowDeveloperApp(false)} />
       <PrecisionSearchAuthModal
         isOpen={showPrecisionAuthModal}
         onClose={() => setShowPrecisionAuthModal(false)}
+      />
+      <UnsupportedUrlModal
+        isOpen={!!unsupportedUrlValue}
+        onClose={() => setUnsupportedUrlValue(null)}
+        submittedValue={unsupportedUrlValue}
       />
     </>
   );

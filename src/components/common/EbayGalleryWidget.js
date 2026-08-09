@@ -105,6 +105,19 @@ export function EbayGalleryWidget({
     return `${currency}${val.toFixed(2)}`;
   };
 
+  // Show strikethrough "was" price when Browse marketingPrice indicates a discount
+  const getStrikethroughOriginal = (item) => {
+    const original = item.marketingPrice?.originalPrice;
+    if (!original) return null;
+    const originalVal = parseFloat(original.value);
+    const currentVal = parseFloat(item.price?.value);
+    if (isNaN(originalVal) || isNaN(currentVal) || originalVal <= currentVal) return null;
+    // eBay uses STRIKE_THROUGH or MARKDOWN for promotional was/now pricing
+    const treatment = item.marketingPrice?.priceTreatment;
+    if (treatment && treatment !== 'STRIKE_THROUGH' && treatment !== 'MARKDOWN') return null;
+    return formatPrice(original);
+  };
+
   // Get the best link (prefer affiliate URL)
   const getItemUrl = (item) => {
     return item.itemAffiliateWebUrl || item.itemWebUrl || '#';
@@ -114,17 +127,17 @@ export function EbayGalleryWidget({
   const showingEnd = Math.min(offset + limit, total);
 
   return (
-    <div className="bg-white rounded-lg border border-[#D4CFC0] overflow-hidden shadow-md">
+    <div className="bg-surface-elevated rounded-lg border border-[#D4CFC0] overflow-hidden shadow-md dark:border-outline/25">
       {/* Header with sort & pagination info */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 sm:px-6 py-3 bg-[#FDFDF8] border-b border-[#D4CFC0] gap-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 sm:px-6 py-3 bg-surface-container-low border-b border-[#D4CFC0] gap-2 dark:border-outline/20">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#E53238] rounded-md flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 bg-pinterest rounded-md flex items-center justify-center flex-shrink-0">
             <ShoppingBag className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#1D1F20]">eBay Results</h3>
+            <h3 className="text-sm font-bold text-on-surface">eBay Results</h3>
             {total > 0 && (
-              <p className="text-xs text-[#5D5F60]">
+              <p className="text-xs text-on-surface-variant">
                 Showing {showingStart}–{showingEnd} of {total.toLocaleString()} results
               </p>
             )}
@@ -135,11 +148,11 @@ export function EbayGalleryWidget({
           {/* Sort dropdown */}
           {!hideSortOptions && (
             <div className="relative flex items-center gap-1.5">
-              <ArrowUpDown className="w-3.5 h-3.5 text-[#5D5F60]" />
+              <ArrowUpDown className="w-3.5 h-3.5 text-on-surface-variant" />
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className="text-xs bg-white border border-[#D4CFC0] rounded-md px-2 py-1.5 text-[#3D3F40] focus:outline-none focus:ring-2 focus:ring-[#EB9D2A]/30 focus:border-[#EB9D2A]"
+                className="text-xs bg-white border border-[#C5BFAE] rounded-md px-2 py-1.5 text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary dark:bg-surface-bright dark:border-outline/30"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -153,7 +166,7 @@ export function EbayGalleryWidget({
             <button
               onClick={() => prevUrl && doSearch(prevUrl)}
               disabled={!prevUrl || loading}
-              className="p-1.5 rounded-md border border-[#D4CFC0] bg-white text-[#5D5F60] hover:bg-[#EEEFE9] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-md border border-[#C5BFAE] bg-white text-on-surface-variant hover:bg-[#F8F7F2] disabled:opacity-40 disabled:cursor-not-allowed transition-colors dark:border-outline/30 dark:bg-surface-elevated dark:hover:bg-surface-container-low"
               aria-label="Previous page"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -161,7 +174,7 @@ export function EbayGalleryWidget({
             <button
               onClick={() => nextUrl && doSearch(nextUrl)}
               disabled={!nextUrl || loading}
-              className="p-1.5 rounded-md border border-[#D4CFC0] bg-white text-[#5D5F60] hover:bg-[#EEEFE9] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-md border border-[#C5BFAE] bg-white text-on-surface-variant hover:bg-[#F8F7F2] disabled:opacity-40 disabled:cursor-not-allowed transition-colors dark:border-outline/30 dark:bg-surface-elevated dark:hover:bg-surface-container-low"
               aria-label="Next page"
             >
               <ChevronRight className="w-4 h-4" />
@@ -171,12 +184,12 @@ export function EbayGalleryWidget({
       </div>
 
       {/* Content */}
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 bg-[#FDFDF8] dark:bg-surface-container-low">
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-[#EB9D2A] animate-spin" />
-            <span className="ml-3 text-sm text-[#5D5F60]">Searching eBay...</span>
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <span className="ml-3 text-sm text-on-surface-variant">Searching eBay...</span>
           </div>
         )}
 
@@ -191,21 +204,24 @@ export function EbayGalleryWidget({
         {/* Empty */}
         {!loading && !error && items.length === 0 && searchKeyword && (
           <div className="text-center py-12">
-            <Grid3X3 className="w-10 h-10 text-[#D4CFC0] mx-auto mb-3" />
-            <p className="text-sm text-[#5D5F60]">No eBay results found for "{searchKeyword}"</p>
+            <Grid3X3 className="w-10 h-10 text-outline mx-auto mb-3" />
+            <p className="text-sm text-on-surface-variant">No eBay results found for "{searchKeyword}"</p>
           </div>
         )}
 
         {/* Gallery Grid */}
         {!loading && items.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-            {items.map((item) => (
+            {items.map((item) => {
+              const currentPrice = formatPrice(item.price);
+              const originalPrice = getStrikethroughOriginal(item);
+              return (
               <a
                 key={item.itemId}
                 href={getItemUrl(item)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-[#FDFDF8] rounded-lg border border-[#EEEFE9] hover:border-[#EB9D2A] hover:shadow-md overflow-hidden transition-all"
+                className="group bg-white rounded-lg border border-[#C5BFAE] hover:border-primary hover:shadow-md overflow-hidden transition-all dark:bg-surface-bright dark:border-outline/35"
                 onClick={(e) => {
                   if (onItemClick) {
                     e.preventDefault();
@@ -214,7 +230,7 @@ export function EbayGalleryWidget({
                 }}
               >
                 {/* Image */}
-                <div className="aspect-square bg-[#EEEFE9] overflow-hidden">
+                <div className="aspect-square bg-surface-section overflow-hidden">
                   <img
                     src={item.image?.imageUrl || ''}
                     alt={item.title}
@@ -228,40 +244,50 @@ export function EbayGalleryWidget({
                 </div>
                 {/* Info */}
                 <div className="p-2.5">
-                  <h4 className="text-xs sm:text-sm font-medium text-[#1D1F20] line-clamp-2 leading-snug group-hover:text-[#0654BA] transition-colors">
+                  <h4 className="text-xs sm:text-sm font-medium text-on-surface line-clamp-2 leading-snug group-hover:text-accent-blue transition-colors">
                     {item.title}
                   </h4>
-                  <div className="mt-1.5 flex items-center justify-between">
-                    {formatPrice(item.price) ? (
-                      <span className="text-sm font-bold text-[#1D4AFF]">{formatPrice(item.price)}</span>
+                  <div className="mt-1.5 flex items-center justify-between gap-1">
+                    {currentPrice ? (
+                      <div className="flex items-baseline gap-1.5 min-w-0">
+                        {originalPrice && (
+                          <span className="text-xs text-on-surface-variant line-through flex-shrink-0">
+                            {originalPrice}
+                          </span>
+                        )}
+                        <span className="text-sm font-bold text-accent-blue truncate">
+                          {currentPrice}
+                        </span>
+                      </div>
                     ) : (
-                      <span className="text-xs text-[#5D5F60]">See price</span>
+                      <span className="text-xs text-on-surface-variant">See price</span>
                     )}
-                    <ExternalLink className="w-3 h-3 text-[#D4CFC0] group-hover:text-[#EB9D2A] transition-colors" />
+                    <ExternalLink className="w-3 h-3 text-outline group-hover:text-primary transition-colors flex-shrink-0" />
                   </div>
                   {item.condition && (
-                    <span className="inline-block mt-1 text-[10px] text-[#5D5F60] bg-[#EEEFE9] px-1.5 py-0.5 rounded">
+                    <span className="inline-block mt-1 text-[10px] text-on-surface-variant bg-surface-section px-1.5 py-0.5 rounded">
                       {item.condition}
                     </span>
                   )}
                 </div>
               </a>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Footer pagination */}
       {!loading && items.length > 0 && (prevUrl || nextUrl) && (
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 bg-[#FDFDF8] border-t border-[#D4CFC0]">
-          <p className="text-xs text-[#5D5F60]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 bg-surface-container-low border-t border-[#D4CFC0] dark:border-outline/20">
+          <p className="text-xs text-on-surface-variant">
             Showing {showingStart}–{showingEnd} of {total.toLocaleString()}
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => prevUrl && doSearch(prevUrl)}
               disabled={!prevUrl}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-[#D4CFC0] rounded-md bg-white text-[#3D3F40] hover:bg-[#EEEFE9] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-[#C5BFAE] rounded-md bg-white text-on-surface-variant hover:bg-[#F8F7F2] disabled:opacity-40 disabled:cursor-not-allowed transition-colors dark:border-outline/30 dark:bg-surface-elevated dark:hover:bg-surface-container"
             >
               <ChevronLeft className="w-3 h-3" />
               Prev
@@ -269,7 +295,7 @@ export function EbayGalleryWidget({
             <button
               onClick={() => nextUrl && doSearch(nextUrl)}
               disabled={!nextUrl}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-[#D4CFC0] rounded-md bg-white text-[#3D3F40] hover:bg-[#EEEFE9] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-[#C5BFAE] rounded-md bg-white text-on-surface-variant hover:bg-[#F8F7F2] disabled:opacity-40 disabled:cursor-not-allowed transition-colors dark:border-outline/30 dark:bg-surface-elevated dark:hover:bg-surface-container"
             >
               Next
               <ChevronRight className="w-3 h-3" />

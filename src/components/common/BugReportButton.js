@@ -6,9 +6,6 @@ import { useAuth } from '../../context/AuthContext';
 
 /**
  * Floating "Report a problem" button + modal.
- *
- * Submits a user bug report to /api/report (type=user). Auto-attaches the
- * current URL. Hidden on the admin dashboard routes to avoid clutter.
  */
 export function BugReportButton() {
   const location = useLocation();
@@ -20,7 +17,6 @@ export function BugReportButton() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);
 
-  // Don't show on admin/dev surfaces
   if (location.pathname.startsWith('/dev')) return null;
 
   const reset = () => {
@@ -57,61 +53,76 @@ export function BugReportButton() {
 
   return (
     <>
-      {/* Floating button */}
       <button
         onClick={() => setOpen(true)}
         title="Report a problem"
         aria-label="Report a problem"
-        className="fixed bottom-5 left-5 z-40 flex items-center gap-2 bg-[#1D1F20] text-white text-sm font-medium pl-3 pr-4 py-2.5 rounded-full shadow-lg hover:bg-[#3D3F40] transition-colors"
+        className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full bg-on-surface py-2.5 pl-3 pr-4 text-sm font-medium text-surface shadow-lg transition-colors hover:opacity-90"
       >
-        <Bug className="w-4 h-4 text-[#EB9D2A]" />
+        <Bug className="h-4 w-4 text-primary" />
         <span className="hidden sm:inline">Report a problem</span>
       </button>
 
-      {/* Modal */}
       {open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40" onClick={close}>
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#E0DCCE]">
-              <h3 className="font-bold text-[#1D1F20] flex items-center gap-2"><Bug className="w-5 h-5 text-[#EB9D2A]" /> Report a problem</h3>
-              <button onClick={close} className="p-1.5 rounded-md text-[#5D5F60] hover:bg-[#EEEFE9]"><X className="w-5 h-5" /></button>
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onClick={close}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-outline/20 bg-surface-bright shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-outline/10 px-5 py-4">
+              <h3 className="flex items-center gap-2 font-bold text-on-surface">
+                <Bug className="h-5 w-5 text-primary" /> Report a problem
+              </h3>
+              <button
+                onClick={close}
+                className="rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             {done ? (
               <div className="p-8 text-center">
-                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                <p className="text-[#1D1F20] font-medium mb-1">Thanks for the report!</p>
-                <p className="text-sm text-[#5D5F60] mb-5">Our team will look into it.</p>
+                <CheckCircle className="mx-auto mb-3 h-12 w-12 text-green-500" />
+                <p className="mb-1 font-medium text-on-surface">Thanks for the report!</p>
+                <p className="mb-5 text-sm text-on-surface-variant">Our team will look into it.</p>
                 <button onClick={close} className="btn-primary">Close</button>
               </div>
             ) : (
-              <form onSubmit={submit} className="p-5 space-y-4">
+              <form onSubmit={submit} className="space-y-4 p-5">
                 <div>
-                  <label className="block text-sm font-medium text-[#3D3F40] mb-1">What went wrong?</label>
+                  <label className="mb-1 block text-sm font-medium text-on-surface-variant">What went wrong?</label>
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={4}
                     autoFocus
                     placeholder="Describe what happened and what you expected…"
-                    className="w-full border border-[#D4CFC0] rounded-lg px-3 py-2 text-sm text-[#1D1F20] focus:border-[#EB9D2A] focus:outline-none resize-none"
+                    className="w-full resize-none rounded-lg border border-outline/20 bg-surface-bright px-3 py-2 text-sm text-on-surface outline-none focus:border-primary"
                   />
                 </div>
                 {!currentUser && (
                   <div>
-                    <label className="block text-sm font-medium text-[#3D3F40] mb-1">Email (optional)</label>
+                    <label className="mb-1 block text-sm font-medium text-on-surface-variant">Email (optional)</label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="So we can follow up"
-                      className="w-full border border-[#D4CFC0] rounded-lg px-3 py-2 text-sm text-[#1D1F20] focus:border-[#EB9D2A] focus:outline-none"
+                      className="w-full rounded-lg border border-outline/20 bg-surface-bright px-3 py-2 text-sm text-on-surface outline-none focus:border-primary"
                     />
                   </div>
                 )}
                 {error && <p className="text-sm text-red-500">{error}</p>}
-                <button type="submit" disabled={submitting} className="btn-primary w-full inline-flex items-center justify-center gap-2 disabled:opacity-60">
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   Send report
                 </button>
               </form>

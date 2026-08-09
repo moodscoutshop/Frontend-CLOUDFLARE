@@ -71,7 +71,7 @@ export function GlassProgressBar() {
       {/* Single continuous progress bar with segments inside */}
       <div className="relative w-full h-6 sm:h-8">
         {/* Progress bar container */}
-        <div className="absolute inset-0 rounded-full bg-[#EEEFE9] overflow-hidden">
+        <div className="absolute inset-0 rounded-full bg-surface-section overflow-hidden">
           {/* Segments with dividers */}
           <div className="absolute inset-0 flex">
             {SEGMENTS.map((seg, idx) => {
@@ -93,17 +93,17 @@ export function GlassProgressBar() {
               let textClass = '';
               
               if (segDone) {
-                // Completed segment - darker green
-                bgClass = 'bg-gradient-to-r from-[#1B8A4A] to-[#22A55B]';
-                textClass = 'text-white';
+                // Completed segment — dark ink for >=4.5:1 on theme accent-green
+                bgClass = 'bg-gradient-to-r from-accent-green to-accent-green';
+                textClass = 'text-on-primary-strong';
               } else if (segActive) {
-                // Active segment - soft purple/pink moving gradient
+                // Active segment - soft purple/pink moving gradient (mid tones; white stays legible)
                 bgClass = 'animate-gradient-move';
                 textClass = 'text-white';
               } else {
                 // Pending segment - no color (transparent to show base)
                 bgClass = 'bg-transparent';
-                textClass = 'text-[#A0A2A3]';
+                textClass = 'text-on-surface-variant/60';
               }
 
               return (
@@ -112,7 +112,7 @@ export function GlassProgressBar() {
                   className={`
                     flex-1 relative flex items-center justify-center
                     ${bgClass}
-                    ${idx < SEGMENTS.length - 1 ? 'border-r-2 border-[#F5E9C8]/90' : ''}
+                    ${idx < SEGMENTS.length - 1 ? 'border-r-2 border-primary/30' : ''}
                     transition-all duration-500 ease-out
                   `}
                 >
@@ -174,15 +174,15 @@ export function GlassProgressBar() {
         <div className="flex items-center gap-1.5">
               {isComplete ? (
                 <>
-                  <Check className="w-3 h-3 text-[#1B8A4A]" />
-                  <span className="text-[10px] sm:text-xs font-semibold text-[#1B8A4A]">
+                  <Check className="w-3 h-3 text-accent-green" />
+                  <span className="text-[10px] sm:text-xs font-semibold text-accent-green">
                     Search Complete
                   </span>
                 </>
               ) : isSearching ? (
                 <>
-                  <Loader2 className="w-3 h-3 animate-spin text-[#EB9D2A]" />
-                  <span className="text-[10px] sm:text-xs font-medium text-[#3D3F40]">
+                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                  <span className="text-[10px] sm:text-xs font-medium text-on-surface-variant">
                     {currentPhase === 'pinterest' || currentPhase === 'grid'
                       ? 'Scraping images...'
                       : currentPhase === 'analysis'
@@ -193,15 +193,15 @@ export function GlassProgressBar() {
               ) : null}
             </div>
             <div className="flex items-center gap-1.5">
-              <Clock className={`w-3 h-3 ${isComplete ? 'text-[#1B8A4A]' : 'text-[#A0A2A3]'}`} />
+              <Clock className={`w-3 h-3 ${isComplete ? 'text-accent-green' : 'text-on-surface-variant/60'}`} />
               {isComplete && processingTime != null ? (
-                <span className="text-[10px] sm:text-xs font-semibold text-[#1B8A4A]">
+                <span className="text-[10px] sm:text-xs font-semibold text-accent-green">
                   Total: {formatTime(Math.round(processingTime))}
                 </span>
               ) : (
-                <span className="text-[10px] sm:text-xs text-[#5D5F60] font-mono tabular-nums">
+                <span className="text-[10px] sm:text-xs text-on-surface-variant font-mono tabular-nums">
                   {formatTime(totalElapsed)}
-                  <span className="text-[#A0A2A3]"> / ~{formatTime(Math.max(0, totalEstimated - totalElapsed))}</span>
+                  <span className="text-on-surface-variant/60"> / ~{formatTime(Math.max(0, totalEstimated - totalElapsed))}</span>
                 </span>
               )}
         </div>

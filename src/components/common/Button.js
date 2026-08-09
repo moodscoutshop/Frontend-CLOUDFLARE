@@ -210,9 +210,9 @@ export function Tooltip({
       {isVisible && (
         <div
           className={`
-            absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg
-            shadow-lg whitespace-nowrap
-            animate-fade-in
+            absolute z-50 whitespace-nowrap rounded-lg border border-outline/20
+            bg-surface-elevated px-3 py-2 text-sm text-on-surface shadow-lg
+            animate-fade-in dark:border-white/15 dark:bg-[#1C1A28]
             ${positionStyles[position]}
             ${className}
           `}
@@ -220,7 +220,8 @@ export function Tooltip({
           {content}
           <div
             className={`
-              absolute w-2 h-2 bg-gray-900 rotate-45
+              absolute h-2 w-2 rotate-45 border-outline/20 bg-surface-elevated
+              dark:border-white/15 dark:bg-[#1C1A28]
               ${position === 'top' ? 'top-full -mt-1 left-1/2 -translate-x-1/2' : ''}
               ${position === 'bottom' ? 'bottom-full -mb-1 left-1/2 -translate-x-1/2' : ''}
               ${position === 'left' ? 'left-full -ml-1 top-1/2 -translate-y-1/2' : ''}

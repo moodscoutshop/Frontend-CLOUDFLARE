@@ -29,8 +29,8 @@ export function KeywordFilterBadges({
               inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full 
               transition-all duration-200 cursor-pointer
               ${isSelected 
-                ? 'bg-[#EB9D2A] text-[#1D1F20] border-2 border-dashed border-[#CD8407] shadow-md' 
-                : 'bg-[#EB9D2A]/15 text-[#B17816] border-2 border-transparent hover:border-[#EB9D2A]'
+                ? 'bg-primary text-on-primary-strong border-2 border-dashed border-shadow-amber shadow-md' 
+                : 'bg-primary/15 text-border-amber border-2 border-transparent hover:border-primary'
               }
             `}
           >
@@ -49,8 +49,8 @@ export function KeywordFilterBadges({
         <button
           onClick={onClearAll}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full 
-            bg-[#EEEFE9] text-[#5D5F60] border-2 border-transparent 
-            hover:bg-[#E0DCCE] hover:border-[#D4CFC0] transition-all duration-200"
+            bg-surface-section text-on-surface-variant border-2 border-transparent 
+            hover:bg-surface-container-low hover:border-outline/20 transition-all duration-200"
         >
           <X className="w-3 h-3" />
           Clear
@@ -159,7 +159,7 @@ function CategoryTreeItem({
       <div 
         className={`
           flex items-center gap-2 px-3 py-2 cursor-pointer rounded-lg transition-all duration-200
-          ${isSelected ? 'bg-[#EB9D2A]/15 text-[#B17816]' : 'hover:bg-[#EEEFE9]'}
+          ${isSelected ? 'bg-primary/15 text-border-amber' : 'hover:bg-surface-section'}
           ${level > 0 ? 'ml-4' : ''}
         `}
         style={{ paddingLeft: `${12 + level * 16}px` }}
@@ -171,12 +171,12 @@ function CategoryTreeItem({
               e.stopPropagation();
               onToggleExpand(node.fullPath);
             }}
-            className="p-0.5 hover:bg-[#E0DCCE] rounded transition-colors"
+            className="p-0.5 hover:bg-surface-navbar rounded transition-colors"
           >
             {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-[#5D5F60]" />
+              <ChevronDown className="w-4 h-4 text-on-surface-variant" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-[#5D5F60]" />
+              <ChevronRight className="w-4 h-4 text-on-surface-variant" />
             )}
           </button>
         ) : (
@@ -189,12 +189,12 @@ function CategoryTreeItem({
           className={`
             w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
             ${isSelected 
-              ? 'bg-[#EB9D2A] border-[#EB9D2A]' 
-              : 'border-[#D4CFC0] hover:border-[#EB9D2A]'
+              ? 'bg-primary border-primary' 
+              : 'bg-white border-[#C5BFAE] hover:border-primary dark:bg-transparent dark:border-outline/20'
             }
           `}
         >
-          {isSelected && <Check className="w-3 h-3 text-white" />}
+          {isSelected && <Check className="w-3 h-3 text-on-primary-strong" />}
         </button>
         
         {/* Category name and count */}
@@ -204,14 +204,14 @@ function CategoryTreeItem({
         >
           {node.name}
         </span>
-        <span className="text-xs text-[#5D5F60] bg-[#EEEFE9] px-2 py-0.5 rounded-full flex-shrink-0">
+        <span className="text-xs text-on-surface-variant bg-surface-section px-2 py-0.5 rounded-full flex-shrink-0">
           {node.count}
         </span>
       </div>
       
       {/* Children */}
       {hasChildren && isExpanded && (
-        <div className="border-l-2 border-[#EEEFE9] ml-6">
+        <div className="border-l-2 border-surface-section ml-6">
           {Object.values(node.children).map((child, idx) => (
             <CategoryTreeItem
               key={`${child.fullPath}-${idx}`}
@@ -367,7 +367,7 @@ export function CategoryDropdown({
   const dropdownClasses = `
     absolute min-w-[20rem] max-w-[min(28rem,90vw)] max-h-96
     overflow-y-auto overflow-x-hidden
-    bg-[#FDFDF8] rounded-lg shadow-xl border border-[#D4CFC0] z-50
+    bg-surface-container-low rounded-lg shadow-xl border border-outline/10 z-50
     ${position.direction === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'}
     ${alignmentClass}
   `;
@@ -381,8 +381,8 @@ export function CategoryDropdown({
         className={`
           inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200
           ${selectedCategories.length > 0 
-            ? 'bg-[#EB9D2A]/15 border-[#EB9D2A] text-[#B17816]' 
-            : 'bg-white border-[#D4CFC0] text-[#3D3F40] hover:border-[#EB9D2A]'
+            ? 'bg-primary/15 border-primary text-border-amber' 
+            : 'bg-white border-[#C5BFAE] text-on-surface-variant hover:border-primary dark:bg-surface-elevated dark:border-outline/20'
           }
         `}
       >
@@ -400,13 +400,13 @@ export function CategoryDropdown({
       {isOpen && (
         <div ref={panelRef} className={dropdownClasses}>
           {/* Header */}
-          <div className="sticky top-0 bg-[#FDFDF8] px-4 py-3 border-b border-[#D4CFC0]">
+          <div className="sticky top-0 bg-surface-container-low px-4 py-3 border-b border-outline/10">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-[#1D1F20]">Filter by Category</span>
+              <span className="font-semibold text-on-surface">Filter by Category</span>
               {selectedCategories.length > 0 && (
                 <button
                   onClick={onClearCategories}
-                  className="text-xs text-[#EB9D2A] hover:text-[#CD8407] font-medium"
+                  className="text-xs text-primary hover:text-shadow-amber font-medium"
                 >
                   Clear all
                 </button>
@@ -418,20 +418,20 @@ export function CategoryDropdown({
           <div 
             onClick={() => handleCategorySelect('default')}
             className={`
-              flex items-center gap-2 px-4 py-3 cursor-pointer border-b border-[#EEEFE9]
-              ${isDefaultSelected ? 'bg-[#EB9D2A]/10' : 'hover:bg-[#EEEFE9]'}
+              flex items-center gap-2 px-4 py-3 cursor-pointer border-b border-surface-section
+              ${isDefaultSelected ? 'bg-primary/10' : 'hover:bg-surface-section'}
             `}
           >
             <div className={`
               w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
               ${isDefaultSelected 
-                ? 'bg-[#EB9D2A] border-[#EB9D2A]' 
-                : 'border-[#D4CFC0] hover:border-[#EB9D2A]'
+                ? 'bg-primary border-primary' 
+                : 'bg-white border-[#C5BFAE] hover:border-primary dark:bg-transparent dark:border-outline/20'
               }
             `}>
-              {isDefaultSelected && <Check className="w-3 h-3 text-white" />}
+              {isDefaultSelected && <Check className="w-3 h-3 text-on-primary-strong" />}
             </div>
-            <span className={`text-sm ${isDefaultSelected ? 'font-medium text-[#B17816]' : 'text-[#5D5F60]'}`}>
+            <span className={`text-sm ${isDefaultSelected ? 'font-medium text-border-amber' : 'text-on-surface-variant'}`}>
               All Categories (Default)
             </span>
           </div>

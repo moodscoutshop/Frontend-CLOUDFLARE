@@ -96,6 +96,7 @@
   --color-btn-primary: #EB9D2A;
   --color-btn-primary-shadow: #CD8407;
   --color-btn-primary-border: #B17816;
+  --color-btn-primary-text: #1D1F20;
   --color-btn-secondary: #FFFFFF;
   --color-btn-secondary-shadow: #EB9D2A;
   --color-btn-secondary-border: #B17816;
@@ -110,10 +111,140 @@
   --color-border-medium: #D4CFC0;
 }
 
+/* ============================================
+   THEME-AWARE SEMANTIC COLOR TOKENS (light + dark)
+   Values are "R G B" triples so Tailwind's
+   rgb(var(--c-x) / <alpha-value>) opacity utilities work.
+   ============================================ */
+:root {
+  --c-background: 253 253 248;
+  --c-on-background: 29 31 32;
+  --c-on-surface: 29 31 32;
+  --c-on-surface-variant: 93 95 96;
+  --c-surface: 253 253 248;
+  --c-surface-bright: 255 255 255;
+  --c-surface-dim: 221 215 235;
+  --c-surface-container-lowest: 255 255 255;
+  --c-surface-container-low: 247 241 255;
+  --c-surface-container: 241 235 255;
+  --c-surface-container-high: 235 229 250;
+  --c-surface-container-highest: 229 224 244;
+  --c-surface-variant: 237 231 220;
+  --c-surface-warm: 240 234 224;
+  --c-surface-raised: 235 231 224;
+  --c-surface-elevated: 255 255 255;
+  --c-inverse-surface: 49 46 62;
+  --c-inverse-on-surface: 244 238 255;
+  --c-outline: 212 207 192;
+  --c-outline-variant: 224 220 206;
+  --c-primary: 235 157 42;
+  --c-on-primary: 255 255 255;
+  /* High-contrast ink on primary fills (results buttons/tabs/chips) — keeps landing CTAs on --c-on-primary */
+  --c-on-primary-strong: 29 31 32;
+  --c-text-muted: 134 117 144;
+  --c-cosmic-void: 20 18 32;
+  --c-void: 20 18 32;
+  --c-warm-cream: 253 253 248;
+  --c-warm-white: 240 234 224;
+  /* Phone mockup accent — purple in light, gold in dark */
+  --c-phone-accent: 124 58 237;
+  --shadow-hero-cta: 0 10px 30px rgba(235, 157, 42, 0.3);
+  /* How-it-works status dots — OKLCH L C H for theme-aware contrast */
+  --c-status-pin: 0.55 0.22 25;
+  --c-status-match: 0.55 0.12 145;
+  /* Results-page accents — OKLCH L C H (lighter L in dark for contrast) */
+  --c-accent-green: 0.72 0.16 155;
+  --c-accent-green-container: 0.92 0.05 155;
+  --c-accent-blue: 0.62 0.19 255;
+  --c-accent-purple: 0.55 0.25 320;
+  /* Chunky amber button shadow/border (#CD8407 / #B17816) */
+  --c-shadow-amber: 0.65 0.15 70;
+  --c-border-amber: 0.58 0.13 75;
+  /* Results section / navbar surfaces (preserve industrial cream in light) */
+  --c-surface-section: 238 239 233;
+  --c-surface-navbar: 224 220 206;
+}
+
+html.dark {
+  color-scheme: dark;
+  /* Page bg matches prototype body (#0C0A18 / cosmic-void) */
+  --c-background: 12 10 24;
+  --c-on-background: 229 223 244;
+  --c-on-surface: 229 223 244;
+  --c-on-surface-variant: 215 195 175;
+  --c-surface: 12 10 24;
+  --c-surface-bright: 58 55 71;
+  --c-surface-dim: 12 10 24;
+  --c-surface-container-lowest: 14 12 26;
+  --c-surface-container-low: 28 26 40;
+  --c-surface-container: 32 30 45;
+  --c-surface-container-high: 42 40 55;
+  --c-surface-container-highest: 53 51 67;
+  --c-surface-variant: 53 51 67;
+  --c-surface-warm: 24 21 48;
+  --c-surface-raised: 33 30 60;
+  /* Cards / elevated panels — #181530 */
+  --c-surface-elevated: 24 21 48;
+  --c-inverse-surface: 229 223 244;
+  --c-inverse-on-surface: 49 46 62;
+  --c-outline: 159 142 123;
+  --c-outline-variant: 82 68 53;
+  /* Gold accent (#FFBC66) — dominant dark-mode accent per handoff */
+  --c-primary: 255 188 102;
+  --c-on-primary: 71 42 0;
+  --c-on-primary-strong: 71 42 0;
+  --c-text-muted: 134 117 144;
+  --c-cosmic-void: 12 10 24;
+  --c-void: 12 10 24;
+  --c-warm-cream: 12 10 24;
+  --c-warm-white: 24 21 48;
+  --c-phone-accent: 255 188 102;
+  --shadow-hero-cta: 0 10px 30px rgba(255, 188, 102, 0.35);
+  --c-status-pin: 0.78 0.16 25;
+  --c-status-match: 0.78 0.12 145;
+  /* Results-page accents — raised L for dark-surface contrast */
+  --c-accent-green: 0.78 0.14 155;
+  --c-accent-green-container: 0.32 0.06 155;
+  --c-accent-blue: 0.75 0.14 255;
+  --c-accent-purple: 0.72 0.18 320;
+  --c-shadow-amber: 0.72 0.12 70;
+  --c-border-amber: 0.70 0.11 75;
+  /* Results section/nav align to landing void hierarchy */
+  --c-surface-section: 12 10 24;
+  --c-surface-navbar: 28 26 40;
+
+  /* Industrial helpers (--color-*) follow semantic tokens in dark mode */
+  --color-bg-primary: rgb(var(--c-background));
+  --color-bg-section: rgb(var(--c-surface-section));
+  --color-bg-navbar: rgb(var(--c-surface-navbar));
+  --color-amber: rgb(var(--c-primary));
+  --color-amber-dark: oklch(var(--c-border-amber));
+  --color-green: oklch(var(--c-accent-green));
+  --color-blue: oklch(var(--c-accent-blue));
+  --color-purple: oklch(var(--c-accent-purple));
+  --color-btn-primary: rgb(var(--c-primary));
+  --color-btn-primary-shadow: oklch(var(--c-shadow-amber));
+  --color-btn-primary-border: oklch(var(--c-border-amber));
+  --color-btn-primary-text: rgb(var(--c-on-primary-strong));
+  --color-btn-secondary: rgb(var(--c-surface-elevated));
+  --color-btn-secondary-shadow: rgb(var(--c-primary));
+  --color-btn-secondary-border: oklch(var(--c-border-amber));
+  --color-ink: rgb(var(--c-on-surface));
+  --color-ink-light: rgb(var(--c-on-surface-variant));
+  --color-ink-muted: rgb(var(--c-on-surface-variant));
+  --color-border-light: rgb(var(--c-outline-variant));
+  --color-border-medium: rgb(var(--c-outline));
+}
+
 /* Base body styling */
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background-color: var(--color-bg-primary);
-  color: var(--color-ink);
+  background-color: rgb(var(--c-background));
+  color: rgb(var(--c-on-background));
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* ============================================
@@ -139,10 +270,19 @@ body {
   -webkit-backdrop-filter: blur(12px);
 }
 
+html.dark .glass {
+  background: rgba(12, 10, 24, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 .glass-light {
   background: rgba(253, 253, 248, 0.9);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+html.dark .glass-light {
+  background: rgba(24, 21, 48, 0.9);
 }
 
 /* ============================================
@@ -155,7 +295,7 @@ body {
   background-color: var(--color-btn-primary);
   border: 1px solid var(--color-btn-primary-border);
   box-shadow: 0 2px 0 0 var(--color-btn-primary-shadow);
-  color: var(--color-ink);
+  color: var(--color-btn-primary-text);
 }
 
 .btn-primary:hover {
@@ -193,7 +333,7 @@ body {
 
 .card {
   @apply rounded-lg;
-  background-color: #FFFFFF;
+  background-color: rgb(var(--c-surface-elevated));
   border: 1px solid var(--color-border-light);
 }
 
@@ -392,4 +532,231 @@ body {
   background: linear-gradient(90deg, #9B59B6, #C77DBA, #E091C0, #C77DBA, #9B59B6, #C77DBA, #E091C0);
   background-size: 300% 100%;
   animation: gradient-move 1.5s ease-in-out infinite;
+}
+
+/* ============================================
+   LANDING PAGE EDITORIAL THEME
+   ============================================ */
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.bloom-orange {
+  background: radial-gradient(circle, rgb(var(--c-primary) / 0.12) 0%, transparent 70%);
+}
+
+html.dark .bloom-orange {
+  background: radial-gradient(circle, rgb(var(--c-primary) / 0.08) 0%, transparent 70%);
+}
+
+.hero-sub {
+  font-family: "Cormorant Garamond", Georgia, serif;
+}
+
+.landing-film-grain {
+  position: relative;
+  isolation: isolate;
+}
+
+.landing-film-grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.55) 0, transparent 1px),
+    radial-gradient(circle at 80% 30%, rgba(20, 18, 32, 0.25) 0, transparent 1px),
+    radial-gradient(circle at 30% 80%, rgba(20, 18, 32, 0.18) 0, transparent 1px),
+    radial-gradient(circle at 60% 60%, rgba(255, 255, 255, 0.35) 0, transparent 1px);
+  background-size: 9px 9px, 13px 13px, 11px 11px, 15px 15px;
+  opacity: 0.04;
+  z-index: 0;
+}
+
+.phone-frame {
+  /* Same prominent outline language as modals / elevated panels */
+  border: 12px solid #D4CFC0;
+  box-shadow:
+    0 0 40px rgba(0, 0, 0, 0.05),
+    0 0 100px rgba(235, 157, 42, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+html.dark .phone-frame {
+  border-color: rgb(var(--c-outline) / 0.35);
+  box-shadow:
+    0 0 40px rgba(0, 0, 0, 0.5),
+    0 0 100px rgba(255, 188, 102, 0.08);
+}
+
+/* ============================================
+   MODAL / DIALOG ENTRANCE ANIMATION
+   Shared by SettingsModal-style popups (e.g. error dialog)
+   ============================================ */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============================================
+   ANNOUNCEMENT / NOTIFICATION BANNER
+   ============================================ */
+@keyframes bannerSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-banner-slide-down {
+  animation: bannerSlideDown 0.25s ease-out;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes landing-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-landing-fade-in {
+  animation: landing-fade-in 0.5s ease forwards;
+}
+
+@keyframes landing-scan {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+.animate-landing-scan {
+  animation: landing-scan 3s infinite ease-in-out;
+}
+
+@keyframes landing-marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Faster marquee — lower duration = higher perceived speed. Phone is intentionally quicker. */
+.animate-landing-marquee {
+  animation: landing-marquee 7s linear infinite;
+}
+
+@media (min-width: 768px) {
+  .animate-landing-marquee {
+    animation-duration: 14s;
+  }
+}
+
+@media (min-width: 1280px) {
+  .animate-landing-marquee {
+    animation-duration: 16s;
+  }
+}
+
+/* Opaque dropdown panel (editorial theme) */
+.solid-panel {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 18px 44px rgba(20, 18, 32, 0.12);
+}
+
+html.dark .solid-panel {
+  background: rgb(var(--c-surface-container-low));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+}
+
+html.dark .glass-panel {
+  background: rgba(24, 21, 48, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Accent glow — uses theme primary (amber light / gold dark) */
+.glow-amber {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.glow-amber:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgb(var(--c-primary) / 0.35);
+}
+
+.glow-amber:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 14px rgb(var(--c-primary) / 0.3);
+}
+
+/* Phone mockup theme accent helpers */
+.phone-accent-border {
+  border-color: rgb(var(--c-phone-accent));
+}
+.phone-accent-text {
+  color: rgb(var(--c-phone-accent));
+}
+.phone-accent-bg {
+  background-color: rgb(var(--c-phone-accent));
+}
+.phone-accent-scan {
+  background-color: rgb(var(--c-phone-accent) / 0.6);
+  box-shadow: 0 0 20px rgb(var(--c-phone-accent));
 }

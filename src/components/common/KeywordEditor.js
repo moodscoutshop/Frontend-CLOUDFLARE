@@ -40,7 +40,7 @@ function KeywordBadge({ value, onChange, onRemove, canRemove }) {
   }, [value]);
 
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full border transition-all duration-200 bg-[#36C46F]/12 text-[#2a9456] border-[#36C46F]/30 focus-within:border-[#36C46F]/60 focus-within:ring-1 focus-within:ring-[#36C46F]/30 max-w-full min-w-0">
+    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full border transition-all duration-200 bg-accent-green/20 text-[#3D6B45] border-accent-green/35 focus-within:border-accent-green/60 focus-within:ring-1 focus-within:ring-accent-green/35 max-w-full min-w-0 dark:text-accent-green">
       <Tag className="w-3 h-3 flex-shrink-0" />
 
       {/* Hidden width measurer — same font metrics as the input */}
@@ -56,7 +56,7 @@ function KeywordBadge({ value, onChange, onRemove, canRemove }) {
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent border-none outline-none text-sm text-[#2a9456] font-medium min-w-[2rem] flex-shrink"
+        className="bg-transparent border-none outline-none text-sm text-[#3D6B45] font-medium min-w-[2rem] flex-shrink dark:text-accent-green"
         style={{ width: `${Math.max(32, width)}px`, maxWidth: 'min(100%, 240px)' }}
         spellCheck={false}
       />
@@ -66,7 +66,7 @@ function KeywordBadge({ value, onChange, onRemove, canRemove }) {
         <button
           type="button"
           onClick={onRemove}
-          className="p-0.5 rounded-full hover:bg-red-100 text-[#2a9456]/60 hover:text-red-500 transition-colors flex-shrink-0"
+          className="p-0.5 rounded-full hover:bg-red-500/10 text-[#3D6B45]/60 hover:text-red-500 transition-colors flex-shrink-0 dark:text-accent-green/60"
           title="Remove keyword"
         >
           <X className="w-3 h-3" />
@@ -141,8 +141,8 @@ export function KeywordEditor({
 
       {/* Add keyword badge */}
       {isAdding ? (
-        <span className={`${badgeBase} bg-[#36C46F]/12 border-[#36C46F]/50 border-dashed pr-1`}>
-          <Plus className="w-3 h-3 text-[#2a9456]" />
+        <span className={`${badgeBase} bg-accent-green/20 border-accent-green/50 border-dashed pr-1`}>
+          <Plus className="w-3 h-3 text-[#3D6B45] dark:text-accent-green" />
           <input
             ref={addInputRef}
             type="text"
@@ -154,15 +154,16 @@ export function KeywordEditor({
               else cancelAdd();
             }}
             placeholder="New keyword"
-            className="bg-transparent border-none outline-none text-sm text-[#2a9456] font-medium placeholder:text-[#2a9456]/40 w-24 min-w-[5rem]"
+            className="bg-transparent border-none outline-none text-sm text-[#3D6B45] font-medium placeholder:text-[#3D6B45]/40 w-24 min-w-[5rem] dark:text-accent-green dark:placeholder:text-accent-green/40"
           />
         </span>
       ) : (
         <button
           type="button"
           onClick={() => setIsAdding(true)}
-          className={`${badgeBase} bg-[#36C46F]/8 text-[#2a9456]/70 border-[#36C46F]/20 border-dashed
-            hover:bg-[#36C46F]/15 hover:text-[#2a9456] hover:border-[#36C46F]/40 cursor-pointer`}
+          className={`${badgeBase} bg-accent-green/15 text-[#3D6B45]/80 border-accent-green/30 border-dashed
+            hover:bg-accent-green/20 hover:text-[#3D6B45] hover:border-accent-green/45 cursor-pointer
+            dark:text-accent-green/80 dark:hover:text-accent-green`}
           title="Add keyword"
         >
           <Plus className="w-3 h-3" />
@@ -175,8 +176,8 @@ export function KeywordEditor({
         <button
           type="button"
           onClick={onReset}
-          className={`${badgeBase} bg-[#EB9D2A]/10 text-[#B17816] border-[#EB9D2A]/25
-            hover:bg-[#EB9D2A]/20 hover:border-[#EB9D2A]/40 cursor-pointer`}
+          className={`${badgeBase} bg-primary/10 text-border-amber border-outline/20
+            hover:bg-primary/20 hover:border-primary/40 cursor-pointer`}
           title="Reset to original keywords"
         >
           <RotateCcw className="w-3 h-3" />

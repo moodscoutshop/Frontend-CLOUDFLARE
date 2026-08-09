@@ -42,7 +42,7 @@ export function ReSearchButton({
       )}
       <span>{label}</span>
       {count != null && (
-        <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold rounded-full bg-[#1D1F20]/15">
+        <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold rounded-full bg-on-surface/15">
           {count}
         </span>
       )}

@@ -1,0 +1,9 @@
+# Cloudflare Pages redirect rules
+# Order matters: more specific rules first.
+
+# ads.txt — redirect to the adstxt manager service (ported from vercel.json)
+/ads.txt https://srv.adstxtmanager.com/19390/moodscout.shop 301
+
+# SPA catch-all — serve index.html for every unmatched route so that
+# BrowserRouter deep links and page refreshes work correctly.
+/* /index.html 200

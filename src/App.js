@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { SearchProvider } from './context/SearchContext';
 import { PatternProvider } from './context/PatternContext';
@@ -31,6 +31,35 @@ import {
   BlogListPage,
   BlogPostPage,
 } from './pages';
+import { installAnalytics, trackEvent } from './lib/analytics';
+
+function UserAnalyticsTracker() {
+  const location = useLocation();
+  React.useEffect(() => {
+    if (location.pathname.startsWith('/dev')) return undefined;
+    installAnalytics();
+    trackEvent('page_view', { page_path: location.pathname, page_location: window.location.href });
+    const labelFor = (node) => node.getAttribute('aria-label') || node.getAttribute('title') || node.id || node.textContent?.trim().slice(0, 80) || node.tagName.toLowerCase();
+    const onClick = (event) => {
+      const node = event.target.closest('button, a, [role="button"]');
+      if (!node) return;
+      trackEvent(node.tagName === 'A' ? 'link_click' : 'button_click', { page: location.pathname, element_id: node.id || undefined, element_text: labelFor(node), destination: node.href || undefined });
+    };
+    const onChange = (event) => {
+      const node = event.target.closest('select, input[type="checkbox"], input[type="radio"]');
+      if (node) trackEvent('control_change', { page: location.pathname, element_id: node.id || node.name || undefined, value: node.value });
+    };
+    const onTooltip = (event) => {
+      const node = event.target.closest('[title], [data-tooltip]');
+      if (node) trackEvent('tooltip_hover', { page: location.pathname, tooltip_id: node.id || labelFor(node) });
+    };
+    document.addEventListener('click', onClick);
+    document.addEventListener('change', onChange);
+    document.addEventListener('mouseover', onTooltip);
+    return () => { document.removeEventListener('click', onClick); document.removeEventListener('change', onChange); document.removeEventListener('mouseover', onTooltip); };
+  }, [location.pathname]);
+  return null;
+}
 
 /**
  * App Component - Root component with router configuration
@@ -43,6 +72,7 @@ export default function App() {
   return (
     <HelmetProvider>
       <Router>
+        <UserAnalyticsTracker />
         <AuthProvider>
           <SearchProvider>
             <PatternProvider>
