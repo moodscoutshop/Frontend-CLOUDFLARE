@@ -102,7 +102,7 @@ export default function MoodScoutLanding() {
   const productsSectionRef = useRef(null);
 
   // API URL - UPDATED FOR PRODUCTION
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.REACT_APP_API_URL || 'https://backend-cloudflare.moodscoutshop.workers.dev';
 
   const marketplaceOptions = [
     "Etsy",

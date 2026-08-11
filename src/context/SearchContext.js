@@ -105,7 +105,7 @@ export function SearchProvider({ children }) {
   });
   
   // API URL
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.REACT_APP_API_URL || 'https://backend-cloudflare.moodscoutshop.workers.dev';
   
   // Helper function to detect Pinterest URLs
   const isPinterestUrl = useCallback((query) => {

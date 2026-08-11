@@ -17,7 +17,7 @@ export function AdminLoginPage() {
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (token) {
-      fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/admin/verify`, {
+      fetch(`${process.env.REACT_APP_API_URL || 'https://backend-cloudflare.moodscoutshop.workers.dev'}/api/auth/admin/verify`, {
         headers: { Authorization: `Admin ${token}` }
       })
         .then(res => { if (res.ok) navigate('/dev/dashboard'); else localStorage.removeItem('admin_token'); })
@@ -33,7 +33,7 @@ export function AdminLoginPage() {
     try {
       // Try actual login
       const loginRes = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/admin/login`,
+        `${process.env.REACT_APP_API_URL || 'https://backend-cloudflare.moodscoutshop.workers.dev'}/api/auth/admin/login`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

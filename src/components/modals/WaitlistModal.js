@@ -72,7 +72,7 @@ export function WaitlistModal({ isOpen, onClose }) {
   const [mounted, setMounted] = useState(false);
   const [sheetIn, setSheetIn] = useState(false);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.REACT_APP_API_URL || 'https://backend-cloudflare.moodscoutshop.workers.dev';
 
   const resetFormState = useCallback(() => {
     setSubmitStatus(null);

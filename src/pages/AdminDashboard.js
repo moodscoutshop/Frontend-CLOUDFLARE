@@ -20,7 +20,7 @@ import {
 import { adminBlogAPI, adminReportAPI } from '../lib/api';
 import { BlogEditor } from '../components/blog';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'https://backend-cloudflare.moodscoutshop.workers.dev';
 
 function useAdminAPI() {
   const token = localStorage.getItem('admin_token');
